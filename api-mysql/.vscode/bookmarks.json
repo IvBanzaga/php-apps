@@ -1,0 +1,89 @@
+{
+	"files": [
+		{
+			"path": "config/conexion.php",
+			"bookmarks": [
+				{
+					"line": 3,
+					"column": 4,
+					"label": ""
+				},
+				{
+					"line": 12,
+					"column": 3,
+					"label": ""
+				},
+				{
+					"line": 23,
+					"column": 4,
+					"label": ""
+				}
+			]
+		},
+		{
+			"path": "controller/categoria.php",
+			"bookmarks": [
+				{
+					"line": 2,
+					"column": 0,
+					"label": ""
+				},
+				{
+					"line": 5,
+					"column": 0,
+					"label": ""
+				},
+				{
+					"line": 9,
+					"column": 0,
+					"label": ""
+				},
+				{
+					"line": 12,
+					"column": 0,
+					"label": ""
+				},
+				{
+					"line": 16,
+					"column": 0,
+					"label": ""
+				}
+			]
+		},
+		{
+			"path": "models/Categoria.php",
+			"bookmarks": [
+				{
+					"line": 2,
+					"column": 0,
+					"label": ""
+				},
+				{
+					"line": 7,
+					"column": 4,
+					"label": ""
+				},
+				{
+					"line": 19,
+					"column": 4,
+					"label": ""
+				},
+				{
+					"line": 31,
+					"column": 4,
+					"label": ""
+				},
+				{
+					"line": 44,
+					"column": 4,
+					"label": ""
+				},
+				{
+					"line": 58,
+					"column": 4,
+					"label": ""
+				}
+			]
+		}
+	]
+}

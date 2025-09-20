@@ -43,11 +43,11 @@
 
 7. [Apache y MariaDB como servicios automáticos en Windows](#apache-y-mariadb-como-servicios-automáticos-en-windows)
 
-    7.1. [1. Apache](#1-apache)
+    7.1. [Apache](#1-apache)
 
-    7.2. [2. Configura el servicio para que arranque automáticamente:](#2-configura-el-servicio-para-que-arranque-automáticamente)
+    7.2. [Configura el servicio para que arranque automáticamente:](#2-configura-el-servicio-para-que-arranque-automáticamente)
 
-    7.3. [3. Iniciar Apache](#3-iniciar-apache)
+    7.3. [Iniciar Apache](#3-iniciar-apache)
 
 8. [Iniciar MariaDB en automático](#iniciar-mariadb-en-automático)
 

@@ -1,4 +1,3 @@
-[[Wifi]]
 # Instalación y Configuración de Apache, MariaDB y PHP en Windows (sin XAMPP)
 
 # Índice

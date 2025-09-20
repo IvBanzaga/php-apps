@@ -1,47 +1,107 @@
 [[Wifi]]
 # Instalación y Configuración de Apache, MariaDB y PHP en Windows (sin XAMPP)
 
-## Índice
+# Índice
 
 1. [Apache](#apache)
-2. [MariaDB](#mariadb)
-3. [PHP](#php)
-4. [VirtualHost](#virtualhost)
-5. [Configurar e instalación de PhpMyAdmin](#configurar-e-instalacion-de-phpmyadmin)
-6. [Configurar Apache](#configurar-apache)
-7. [Iniciar Apache en modo automático](#iniciar-apache-en-modo-automatico)
-8. [Iniciar MariaDB en modo automático](#iniciar-mariadb-en-modo-automatico)
-9. [Script en PowerShell que reinicia](#script-en-powershell-que-reinicia)
-10. [Recursos y Documentación Oficial](#recursos)
+
+    1.1. [Descarga](#descarga)
+
+    1.2. [Instalación](#instalación)
+
+    1.3. [Configuración del DocumentRoot](#configuración-del-documentroot)
+
+2. [Configuración de un dominio en virtual host](#configuración-de-un-dominio-en-virtual-host)
+
+    2.1. [Probar configuración](#probar-configuración)
+
+    2.2. [Instalar Apache como servicio](#instalar-apache-como-servicio)
+
+3. [MariaDB](#mariadb)
+
+    3.1. [Descarga](#descarga)
+
+    3.2. [Instalación](#instalación)
+
+    3.3. [Probar instalación](#probar-instalación)
+
+    3.4. [Añadir MariaDB al PATH](#añadir-mariadb-al-path)
+
+4. [PHP](#php)
+
+    4.1. [Descarga](#descarga)
+
+    4.2. [Instalación](#instalación)
+
+    4.3. [Integrar PHP con Apache](#integrar-php-con-apache)
+
+5. [PHPmyAdmin](#phpmyadmin)
+
+    5.1. [Configurar phpMyAdmin](#configurar-phpmyadmin)
+
+6. [Configurar  Apache](#configurar-apache)
+
+7. [Apache y MariaDB como servicios automáticos en Windows](#apache-y-mariadb-como-servicios-automáticos-en-windows)
+
+    7.1. [1. Apache](#1-apache)
+
+    7.2. [2. Configura el servicio para que arranque automáticamente:](#2-configura-el-servicio-para-que-arranque-automáticamente)
+
+    7.3. [3. Iniciar Apache](#3-iniciar-apache)
+
+8. [Iniciar MariaDB en automático](#iniciar-mariadb-en-automático)
+
+9. [Scripts](#scripts)
+
+    9.1. [Script en PowerShell de reinicia](#script-en-powershell-de-reinicia)
+
+    9.2. [Script en PowerShell detener servicios](#script-en-powershell-detener-servicios)
+
+10. [Recursos y Documentación Oficial](#recursos-y-documentación-oficial)
 
 
-### Enlaces rápidos (rutas locales)
-
-| Archivo / Propósito | Ruta local |
-|---|---|
-| httpd.conf (Apache) | [C:\Apache24\conf](file:///C:/Apache24/conf) |
-| httpd-vhosts.conf (VirtualHosts) | [C:\Apache24\conf\extra](file:///C:/Apache24/conf/extra) |
-| hosts (DNS local) | [C:\Windows\System32\drivers\etc](file:///C:/Windows/System32/drivers/etc) |
-| config.inc.php (phpMyAdmin) | [C:\Apache24\htdocs\phpMyAdmin\config.inc.php](file:///C:/Apache24/htdocs/phpMyAdmin/config.inc.php) |
-| httpd-alias.conf (Aliases) | [C:\Apache24\conf\extra](file:///C:/Apache24/conf/extra) |
-| php.ini (PHP) | [C:\php\php.ini](file:///C:/php/php.ini) |
 
 
-## Apache
+
+## Enlaces internos que necesitamos abrir, alguno aún no está creado
+
+
+
+
+> [!NOTE] httpd.conf
+>[Abrir carpeta C:\Apache24\conf](file:///C:/Apache24/conf)
+
+> [!NOTE] httpd-vhosts.conf
+>[Abrir carpeta C:\Apache24\conf\extra](file:///C:/Apache24/conf/extra)
+
+> [!NOTE] hosts
+> [Abrir carpeta C:\Windows\System32\drivers\etc](file:///C:/Windows/System32/drivers/etc)
+
+> [!NOTE] config.inc.php
+> [Abrir carpeta C:\php](file:///C:/php)
+
+> [!NOTE] httpd-alias.conf
+> [Abrir carpeta C:\Apache24\conf\extra](file:///C:/Apache24/conf/extra)
+
+> [!NOTE] php.ini
+> [Abrir carpeta C:\Apache24\conf](file:///C:/Apache24/conf)
+
+
+### Apache
 
 Apache es un servidor web que sirve tus páginas y aplicaciones. En Windows se recomienda descargar los binarios desde Apache Lounge.
 
-### Descarga
+#### Descarga
 
 - Apache Lounge (binarios recomendados para Windows 64 bits): [https://www.apachelounge.com/download/](https://www.apachelounge.com/download/)
 
-### Instalación
+#### Instalación
 
 - Descargar el ZIP de Apache 2.4.65 Win64 (VS17).
 - Descomprimir en `C:\Apache24` (puedes cambiar la ruta).
 - Abrir PowerShell en modo administrador.
 
-### Configuración del DocumentRoot
+#### Configuración del DocumentRoot
 
 Editar `C:\Apache24\conf\httpd.conf`:
 
@@ -53,6 +113,7 @@ Include conf/extra/httpd-alias.conf   " este archivo, se configura un poco más 
 
 
 > [!NOTE] Según Chatgpt lo explica más fino
+
 > ### 1️⃣ `httpd.conf` y `DocumentRoot`
 
 - `DocumentRoot` define la **carpeta principal del servidor web**.
@@ -62,9 +123,7 @@ Include conf/extra/httpd-alias.conf   " este archivo, se configura un poco más 
 - Todos los proyectos que no tengan un `VirtualHost` se servirán desde aquí, es decir, si escribes `http://localhost/` mostrará lo que haya en `htdocs`.
     
 
----
-
-### 2️⃣ `httpd-vhosts.conf` y VirtualHost
+> ### 2️⃣ `httpd-vhosts.conf` y VirtualHost
 
 - Se usa cuando quieres **múltiples proyectos con sus propios dominios locales** (`proyecto-php.com`, `otro-proyecto.local`, etc.).
     
@@ -72,9 +131,9 @@ Include conf/extra/httpd-alias.conf   " este archivo, se configura un poco más 
     
 - Esto **sobre escribe** lo que tienes en `DocumentRoot` global de `httpd.conf` solo para ese dominio.
 
+[Volver al índice](#índice)
 
-## Configuración
-## de un dominio en virtual host  
+### Configuración de un dominio en virtual host  
 
 ``` bash
 -- Recordar añadir en --hosts "C:\Windows\System32\drivers\etc\"
@@ -92,7 +151,7 @@ Si quieres usar el puerto estándar `80`, reemplaza `4321` por `80`."
 <VirtualHost *:80>
     ServerName localhost
     DocumentRoot "C:/Apache24/htdocs"
-    
+	
     <Directory "C:/Apache24/htdocs">
         Options Indexes FollowSymLinks
         AllowOverride All
@@ -119,6 +178,7 @@ Si quieres usar el puerto estándar `80`, reemplaza `4321` por `80`."
 "reseteamos" -- C:\Apache24\bin> .\httpd.exe -k restart
 ```
 
+[Volver al índice](#índice)
 #### Probar configuración
 
 ```bash
@@ -144,18 +204,17 @@ net start Apache2.4
 ```
 
 
-# **[volver al índice](#Índice)---
+[Volver al índice](#índice)
 
-
-## MariaDB
+### MariaDB
 
 MariaDB es un sistema gestor de bases de datos, compatible con MySQL.
 
-### Descarga
+#### Descarga
 
 - Página oficial de MariaDB: [https://mariadb.org/download/](https://mariadb.org/download/)
 
-### Instalación
+#### Instalación
 
 - Descargar instalador MSI para Windows.
 - Ejecutar el asistente de instalación.
@@ -174,7 +233,7 @@ cd "C:\Program Files\MariaDB 12.0\bin"
 "Introduce la contraseña que configuraste. Si puedes iniciar sesión, MariaDB está funcionando correctamente."
 ```
 
-### Añadir MariaDB al PATH
+#### Añadir MariaDB al PATH
 
 ``` bash
 - Presiona `Win + S` → escribe "Editar las variables de entorno del sistema" → abrir.
@@ -203,11 +262,11 @@ GRANT ALL PRIVILEGES ON mibasededatos.* TO 'usuario'@'localhost';
 FLUSH PRIVILEGES;
 ```
 
-# **[volver al índice](#Índice)---
+[Volver al índice](#índice)
 
+### PHP
 
-## PHP
-### OJO CON LAS VERSIONES X86 - X64
+OJO CON LAS VERSIONES X86 - X64
 
 PHP es el lenguaje de programación que ejecuta la lógica de tus aplicaciones web.
 
@@ -227,11 +286,11 @@ PHP es el lenguaje de programación que ejecuta la lógica de tus aplicaciones w
     - Por ejemplo: `php-8.2.x-Win32-vs16-x64.zip`
 ```
 
-### Descarga
+#### Descarga
 
 - Página oficial de PHP para Windows: [https://windows.php.net/download/](https://windows.php.net/download/)
 
-### Instalación
+#### Instalación
 
 - Descargar PHP (por ejemplo, php-8.3.x-Win64-vs17.zip).
 - Descomprimir en `C:\php`.
@@ -249,7 +308,7 @@ extension=pdo_mysql
 extension_dir = "C:/php/ext"
 ```
 
-### Integrar PHP con Apache
+#### Integrar PHP con Apache
 
 Editar `C:\Apache24\conf\httpd.conf` y añadir al final de los módulos cargados:
 
@@ -275,12 +334,9 @@ Crear archivo de prueba en `C:/php/web/info.php`:
 
 Abrir en navegador: [http://localhost/info.php](http://localhost/info.php) → Debe mostrar la información de PHP.
 
-# **[volver al índice](#Índice)---
-
-
-
+[Volver al índice](#índice)
 ### PHPmyAdmin
-### INTEGRACIÓN CON SISTEMA GRÁFICO
+INTEGRACIÓN CON SISTEMA GRÁFICO
 
 - Ve a https://www.phpmyadmin.net/downloads/ y descarga la versión **zip** (no el paquete con servidor incluido).
     
@@ -289,8 +345,7 @@ Abrir en navegador: [http://localhost/info.php](http://localhost/info.php) →
     `C:/php/phpmyadmin/`
 
 
-### **2. Configurar 
-### phpMyAdmin**
+#### Configurar phpMyAdmin
 
 - `config.sample.inc.php` renómbralo a `config.inc.php`.
     
@@ -353,11 +408,9 @@ $cfg['QueryHistoryMax'] = 100;    // Máximo de entradas de historial
 
 ---
 
-# **[volver al índice](#Índice)---
+[Volver al índice](#índice)
 
-
-### **Configuramos  
-### Apache**
+### Configurar  Apache
 
 -  En `httpd.conf` incluir enlace de Alias / crear archivo:
 
@@ -377,7 +430,7 @@ Alias /phpmyadmin "C:/php/phpMyAdmin"
     Options Indexes FollowSymLinks
     AllowOverride All
     Require all granted
-    DirectoryIndex index.php index.html
+	DirectoryIndex index.php index.html
 </Directory>
 
 Alias /web "C:/Apache24/htdocs/web/"
@@ -395,7 +448,7 @@ Alias /proyecto "C:/Apache24/htdocs/proyecto"
     Options Indexes FollowSymLinks
     AllowOverride All
     Require all granted
-    DirectoryIndex index.php index.html
+	DirectoryIndex index.php index.html
 </Directory>
 
 
@@ -409,14 +462,12 @@ Alias /proyecto "C:/Apache24/htdocs/proyecto"
     `C:\Apache24\bin> .\httpd.exe -k restart`
     
 ---
-# **[volver al índice](#Índice)---
 
+[Volver al índice](#índice)
 
+### Apache y MariaDB como servicios automáticos en Windows
 
-## Apache y MariaDB como **servicios automáticos en Windows**
-
-## apache_automatico
-## 1. **Apache**
+#### 1. Apache
 
 1. Abre **cmd** como administrador.
     
@@ -429,14 +480,14 @@ C:\Apache24\bin\httpd.exe -k install -n "Apache24"
 
 - `-n "Apache24"` es el nombre que tendrá el servicio (puedes poner otro).
     
-### 2. Configura el servicio para que arranque automáticamente:
+#### 2. Configura el servicio para que arranque automáticamente:
     
 
 ``` bash
 sc config Apache24 start= auto
 ```
 
-### 3. Ahora puedes iniciar Apache manualmente si quieres (solo la primera vez o para probar):
+#### 3. Iniciar Apache
     
 ``` bash
 net start Apache24
@@ -444,12 +495,9 @@ net stop Apache24
 ```
 
 
-# **[volver al índice](#Índice)---
+[Volver al índice](#índice)
 
-
-## Iniciar MariaDB en 
-## automático
-### **Mariadb**
+### Iniciar MariaDB en automático
 
 1. Abre **cmd** como administrador.
     
@@ -477,16 +525,15 @@ net start MariaDB
 net stop MariaDB
 ```
 
-# **[volver al índice](#Índice)---
+[Volver al índice](#índice)
 
+### Scripts
+#### Script en PowerShell de reinicia
 
-
-## Script
-## **script en PowerShell** de reinicia
-
-### Guárdalo como `reiniciar-servicios.ps1`:
 
 ``` bash
+# Guárdalo como `reiniciar-servicios.ps1`:
+
 # Verifica si PowerShell está en modo administrador
 If (-Not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator"))
 {
@@ -531,11 +578,14 @@ Write-Host "`nTodos los servicios han sido reiniciados."
 
 ```
 
-## **script en PowerShell** de detener servicios
+[Volver al índice](#índice)
 
-### Guárdalo como `detener-servicios.ps1`:
+#### Script en PowerShell detener servicios
 
 ``` bash
+# Guárdalo como detener-servicios.ps1:
+
+
 # Verifica si PowerShell está en modo administrador
 If (-Not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator"))
 {
@@ -570,16 +620,11 @@ Detener-Servicio $mariaService
 Write-Host "`nTodos los servicios han sido detenidos."
 ```
 
-# **[volver al índice](#Índice)---
-
-
-
-## Recursos 
-### y Documentación Oficial
+[Volver al índice](#índice)
+### Recursos y Documentación Oficial
 
 - Apache HTTP Server: [https://httpd.apache.org/](https://httpd.apache.org/)
 - Apache Lounge (Windows binaries): [https://www.apachelounge.com/download/](https://www.apachelounge.com/download/)
 - MariaDB: [https://mariadb.org/download/](https://mariadb.org/download/)
 - PHP para Windows: [https://windows.php.net/download/](https://windows.php.net/download/)
 
-# **[volver al índice](#Índice)---

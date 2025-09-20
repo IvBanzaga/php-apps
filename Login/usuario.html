@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8" />
+	<title>Usuario y Pais</title>
+	<link rel="stylesheet" href="css/styles.css" />
+</head>
+
+<body>
+	<h1>LOGIN</h1>
+	<form action="php/validacionActividad2.php" method="post" name="datos_usuario" id="passw_usuario">
+		<table width="15%" align="center">
+			<tr>
+				<td>Nombre:</td>
+				<td>
+					<label for="nombre_usuario"></label>
+					<input type="text" name="nombre_usuario" id="nombre_usuario" />
+				</td>
+			</tr>
+			<tr>
+				<td>Pais:</td>
+				<td>
+					<label for="passw_usuario"></label>
+					<input type="text" name="passw_usuario" id="passw_usuario" />
+				</td>
+			</tr>
+			<tr>
+				<td>&nbsp;</td>
+				<td>&nbsp;</td>
+			</tr>
+			<tr>
+				<td colspan="2" align="center">
+					<input type="submit" name="btnAcceder" id="enviando" value="Enviar" />
+				</td>
+			</tr>
+		</table>
+	</form>
+	<br /><br />
+
+	<form method="post" action="php/validacionActividad3.php">
+		<div>
+			<table width="15%" align="center">
+				<tr>
+					<td><label for="txtPalabra">Palabra:</label></td>
+					<td><input type="text" id="txtPalabra" name="txtPalabra" /></td>
+					<td><button type="submit" name="btnBuscar">Buscar</button></td>
+				</tr>
+			</table>
+		</div>
+	</form>
+</body>
+
+</html>

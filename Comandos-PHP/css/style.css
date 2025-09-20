@@ -1,0 +1,14 @@
+input, label, button
+{
+    font-size: 1.25rem;
+}
+
+body
+{
+    margin-left: 50px;
+}
+
+.size
+{
+    font-size: 2.2rem;
+}

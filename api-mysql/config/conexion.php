@@ -21,7 +21,7 @@ class Conectar
             die();
         }
     }
-    // funcion para establecer el conjunto de caracteres de la conexion
+    // funcion para establecer el conjunto de caracteres especiales de la conexion
     public function set_name()
     {
         return $this->Conexion()->query("SET NAMES 'utf8'");

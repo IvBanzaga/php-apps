@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel de Administración - API REST</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    .sidebar {
+      height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      position: fixed;
+      width: 250px;
+      z-index: 1000;
+    }
+
+    .main-content {
+      margin-left: 250px;
+      padding: 20px;
+    }
+
+    .nav-link {
+      color: white !important;
+      border-radius: 8px;
+      margin: 5px 10px;
+      padding: 10px 15px;
+      transition: all 0.3s;
+    }
+
+    .nav-link:hover,
+    .nav-link.active {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateX(5px);
+    }
+
+    .card {
+      border: none;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      border-radius: 15px;
+      transition: transform 0.3s;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: none;
+      border-radius: 25px;
+    }
+
+    .btn-success {
+      border-radius: 25px;
+    }
+
+    .btn-warning {
+      border-radius: 25px;
+    }
+
+    .btn-danger {
+      border-radius: 25px;
+    }
+
+    .table-container {
+      background: white;
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .alert {
+      border-radius: 15px;
+    }
+
+    .modal-content {
+      border-radius: 15px;
+    }
+
+    .form-control,
+    .form-select {
+      border-radius: 10px;
+      border: 2px solid #e9ecef;
+      transition: border-color 0.3s;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+      border-color: #667eea;
+      box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+
+    .dashboard-card {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: white;
+      border-radius: 15px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .stats-card {
+      background: white;
+      border-radius: 15px;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .stats-icon {
+      font-size: 3rem;
+      color: #667eea;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="p-3">
+      <h4 class="text-white text-center mb-4">
+        <i class="bi bi-gear-fill"></i> Admin Panel
+      </h4>
+      <nav class="nav flex-column">
+        <a class="nav-link active" href="#" onclick="showSection('dashboard')">
+          <i class="bi bi-speedometer2"></i> Dashboard
+        </a>
+        <a class="nav-link" href="#" onclick="showSection('clientes')">
+          <i class="bi bi-people"></i> Clientes
+        </a>
+        <a class="nav-link" href="#" onclick="showSection('productos')">
+          <i class="bi bi-box"></i> Productos
+        </a>
+        <a class="nav-link" href="#" onclick="showSection('cuentas')">
+          <i class="bi bi-bank"></i> Cuentas
+        </a>
+        <a class="nav-link" href="#" onclick="showSection('movimientos')">
+          <i class="bi bi-arrow-left-right"></i> Movimientos
+        </a>
+        <a class="nav-link" href="#" onclick="showSection('tipos-movimiento')">
+          <i class="bi bi-tags"></i> Tipos Movimiento
+        </a>
+        <a class="nav-link" href="#" onclick="showSection('frecuencias')">
+          <i class="bi bi-clock"></i> Frecuencias
+        </a>
+      </nav>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Dashboard Section -->
+    <div id="dashboard-section" class="content-section">
+      <div class="dashboard-card">
+        <h2><i class="bi bi-graph-up"></i> Dashboard</h2>
+        <p>Panel de control para gestión de la API REST</p>
+      </div>
+
+      <div class="row">
+        <div class="col-md-3">
+          <div class="stats-card">
+            <i class="bi bi-people stats-icon"></i>
+            <h3 id="clientes-count">0</h3>
+            <p>Clientes</p>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="stats-card">
+            <i class="bi bi-box stats-icon"></i>
+            <h3 id="productos-count">0</h3>
+            <p>Productos</p>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="stats-card">
+            <i class="bi bi-bank stats-icon"></i>
+            <h3 id="cuentas-count">0</h3>
+            <p>Cuentas</p>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="stats-card">
+            <i class="bi bi-arrow-left-right stats-icon"></i>
+            <h3 id="movimientos-count">0</h3>
+            <p>Movimientos</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Clientes Section -->
+    <div id="clientes-section" class="content-section" style="display: none;">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-people"></i> Gestión de Clientes</h2>
+        <button class="btn btn-primary" onclick="showModal('cliente')">
+          <i class="bi bi-plus"></i> Nuevo Cliente
+        </button>
+      </div>
+
+      <div class="table-container">
+        <div class="loading" id="clientes-loading">
+          <div class="spinner-border text-primary" role="status"></div>
+          <p>Cargando clientes...</p>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover" id="clientes-table">
+            <thead class="table-primary">
+              <tr>
+                <th>ID</th>
+                <th>Identificación</th>
+                <th>Nombres</th>
+                <th>Apellidos</th>
+                <th>Email</th>
+                <th>Teléfono</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Productos Section -->
+    <div id="productos-section" class="content-section" style="display: none;">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-box"></i> Gestión de Productos</h2>
+        <button class="btn btn-primary" onclick="showModal('producto')">
+          <i class="bi bi-plus"></i> Nuevo Producto
+        </button>
+      </div>
+
+      <div class="table-container">
+        <div class="loading" id="productos-loading">
+          <div class="spinner-border text-primary" role="status"></div>
+          <p>Cargando productos...</p>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover" id="productos-table">
+            <thead class="table-primary">
+              <tr>
+                <th>ID</th>
+                <th>Código</th>
+                <th>Nombre</th>
+                <th>Descripción</th>
+                <th>Precio</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cuentas Section -->
+    <div id="cuentas-section" class="content-section" style="display: none;">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-bank"></i> Gestión de Cuentas</h2>
+        <button class="btn btn-primary" onclick="showModal('cuenta')">
+          <i class="bi bi-plus"></i> Nueva Cuenta
+        </button>
+      </div>
+
+      <div class="table-container">
+        <div class="loading" id="cuentas-loading">
+          <div class="spinner-border text-primary" role="status"></div>
+          <p>Cargando cuentas...</p>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover" id="cuentas-table">
+            <thead class="table-primary">
+              <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Número</th>
+                <th>Tipo</th>
+                <th>Banco</th>
+                <th>Saldo</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Movimientos Section -->
+    <div id="movimientos-section" class="content-section" style="display: none;">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-arrow-left-right"></i> Gestión de Movimientos</h2>
+        <button class="btn btn-primary" onclick="showModal('movimiento')">
+          <i class="bi bi-plus"></i> Nuevo Movimiento
+        </button>
+      </div>
+
+      <div class="table-container">
+        <div class="loading" id="movimientos-loading">
+          <div class="spinner-border text-primary" role="status"></div>
+          <p>Cargando movimientos...</p>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover" id="movimientos-table">
+            <thead class="table-primary">
+              <tr>
+                <th>ID</th>
+                <th>Cuenta</th>
+                <th>Tipo</th>
+                <th>Descripción</th>
+                <th>Monto</th>
+                <th>Fecha</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tipos de Movimiento Section -->
+    <div id="tipos-movimiento-section" class="content-section" style="display: none;">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-tags"></i> Tipos de Movimiento</h2>
+        <button class="btn btn-primary" onclick="showModal('tipo-movimiento')">
+          <i class="bi bi-plus"></i> Nuevo Tipo
+        </button>
+      </div>
+
+      <div class="table-container">
+        <div class="loading" id="tipos-movimiento-loading">
+          <div class="spinner-border text-primary" role="status"></div>
+          <p>Cargando tipos de movimiento...</p>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover" id="tipos-movimiento-table">
+            <thead class="table-primary">
+              <tr>
+                <th>ID</th>
+                <th>Movimiento</th>
+                <th>Tipo</th>
+                <th>Descripción</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Frecuencias Section -->
+    <div id="frecuencias-section" class="content-section" style="display: none;">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-clock"></i> Gestión de Frecuencias</h2>
+        <button class="btn btn-primary" onclick="showModal('frecuencia')">
+          <i class="bi bi-plus"></i> Nueva Frecuencia
+        </button>
+      </div>
+
+      <div class="table-container">
+        <div class="loading" id="frecuencias-loading">
+          <div class="spinner-border text-primary" role="status"></div>
+          <p>Cargando frecuencias...</p>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover" id="frecuencias-table">
+            <thead class="table-primary">
+              <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Días</th>
+                <th>Descripción</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alert container -->
+  <div id="alert-container" style="position: fixed; top: 20px; right: 20px; z-index: 9999;"></div>
+
+  <!-- Modal para CRUD -->
+  <div class="modal fade" id="crudModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalTitle">Título</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="crudForm">
+            <div id="formFields"></div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary" id="saveBtn" onclick="saveRecord()">Guardar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="panel.js"></script>
+</body>
+
+</html>

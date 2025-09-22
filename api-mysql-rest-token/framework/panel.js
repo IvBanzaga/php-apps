@@ -129,10 +129,10 @@ async function loadCuentas() {
 async function loadMovimientos() {
     showLoading('movimientos');
     try {
-        // Placeholder - implementar cuando esté la API
+        // Por ahora los movimientos se ven desde las cuentas individuales
         hideLoading('movimientos');
         document.getElementById('movimientos-table').querySelector('tbody').innerHTML = 
-            '<tr><td colspan="7" class="text-center">Funcionalidad en desarrollo</td></tr>';
+            '<tr><td colspan="7" class="text-center text-muted"><i class="bi bi-info-circle"></i> Los movimientos se pueden ver desde la sección de Cuentas.<br><small>Funcionalidad de gestión de movimientos en desarrollo.</small></td></tr>';
     } catch (error) {
         showAlert('Error al cargar movimientos: ' + error.message, 'danger');
         hideLoading('movimientos');
@@ -544,8 +544,21 @@ async function saveRecord() {
                     `${API_BASE_URL}/producto/registro`;
                 method = editMode ? 'PUT' : 'POST';
                 break;
+            case 'cuenta':
+                url = editMode ? 
+                    `${API_BASE_URL}/cuenta/actualizar/${currentRecord.idcuenta}` : 
+                    `${API_BASE_URL}/cuenta/nuevaCuenta`; // Usar el método registro existente
+                method = editMode ? 'PUT' : 'POST';
+                break;
+            case 'frecuencia':
+                url = editMode ? 
+                    `${API_BASE_URL}/frecuencia/actualizar/${currentRecord.idfrecuencia}` : 
+                    `${API_BASE_URL}/frecuencia/registro`;
+                method = editMode ? 'PUT' : 'POST';
+                break;
             case 'tipo-movimiento':
                 url = `${API_BASE_URL}/movimiento/registroTipoMovimiento`;
+                method = 'POST'; // Solo creación disponible por ahora
                 break;
             // Agregar más casos según sea necesario
         }
@@ -572,6 +585,12 @@ async function saveRecord() {
                 case 'productos':
                     loadProductos();
                     break;
+                case 'cuentas':
+                    loadCuentas();
+                    break;
+                case 'frecuencias':
+                    loadFrecuencias();
+                    break;
                 case 'tipos-movimiento':
                     loadTiposMovimiento();
                     break;
@@ -597,7 +616,22 @@ async function editRecord(entity, id) {
             case 'producto':
                 url = `${API_BASE_URL}/producto/producto/${id}`;
                 break;
+            case 'cuenta':
+                url = `${API_BASE_URL}/cuenta/cuenta/${id}`;
+                break;
+            case 'tipo-movimiento':
+                // Por ahora no disponible, mostrar mensaje
+                showAlert('Funcionalidad de edición en desarrollo para tipos de movimiento', 'info');
+                return;
+            case 'frecuencia':
+                url = `${API_BASE_URL}/frecuencia/frecuencia/${id}`;
+                break;
             // Agregar más casos según sea necesario
+        }
+        
+        if (!url) {
+            showAlert('Funcionalidad no disponible para esta entidad', 'warning');
+            return;
         }
         
         const response = await fetch(url);

@@ -45,7 +45,7 @@ class ClienteModel extends Mysql
         if (!empty($request)) {
             return false;
         } else {
-            $query_inset = "INSERT INTO cliente(identificacion,nombres,apellidos,telefono,email,direccion,nit,nombrefiscal,direccionfiscal)
+            $query_inset = "INSERT INTO cliente(identificacion,nombres,apellidos,telefono,email,direccion,nit,nom_fiscal,dir_fiscal)
                                 VALUES(:ident,:nom,:ape,:tel,:email,:dir,:nit,:nomfiscal,:dirfiscal)";
             $arrData = array(
                 ":ident" =>  $this->strIdentificacion,
@@ -91,7 +91,7 @@ class ClienteModel extends Mysql
 
         if (empty($request_cliente)) {
             $sql = "UPDATE cliente SET identificacion = :ident, nombres = :nom, apellidos = :ape, telefono = :tel, email = :email,
-                                         direccion = :dir, nit = :nit, nombrefiscal = :nomfiscal, direccionfiscal = :dirfiscal
+                                         direccion = :dir, nit = :nit, nom_fiscal = :nomfiscal, dir_fiscal = :dirfiscal
                         WHERE idcliente = :id ";
             $arrData = array(
                 ":ident" =>  $this->strIdentificacion,
@@ -126,9 +126,9 @@ class ClienteModel extends Mysql
                             email,
                             direccion,
                             nit,
-                            nombreFiscal,
-                            direccionFiscal,
-                            DATE_FORMAT(datecreated, '%d-%m-%Y') as fechaRegistro
+                            nom_fiscal,
+                            dir_fiscal,
+                            DATE_FORMAT(fecharegistro, '%d-%m-%Y') as fechaRegistro
                             FROM cliente WHERE idcliente = :id AND status != 0";
         $arrData = array(":id" => $this->intIdCliente);
         $request = $this->select($sql, $arrData);
@@ -145,9 +145,9 @@ class ClienteModel extends Mysql
                             email,
                             direccion,
                             nit,
-                            nombreFiscal,
-                            direccionFiscal,
-                            DATE_FORMAT(datecreated, '%d-%m-%Y') as fechaRegistro
+                            nom_fiscal,
+                            dir_fiscal,
+                            DATE_FORMAT(fecharegistro, '%d-%m-%Y') as fechaRegistro
                             FROM cliente WHERE status != 0 ORDER BY idcliente DESC ";
         $request = $this->select_all($sql);
         return $request;

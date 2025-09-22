@@ -36,9 +36,8 @@ class FrecuenciaModel extends Mysql
     public function getFrecuencia(int $idfrecuencia)
     {
         $this->intIdFrecuencia = $idfrecuencia;
-        $sql = "SELECT idfrecuencia,
-							frecuencia,
-							DATE_FORMAT(datecreated, '%d-%m-%Y') as fechaRegistro
+        $sql = "SELECT idfrecuencia, nombre, dias, descripcion,
+							DATE_FORMAT(fecharegistro, '%d-%m-%Y') as fechaRegistro
 							FROM frecuencia WHERE idfrecuencia = :idfrecuencia AND status != 0 ";
         $arrData = array(":idfrecuencia" => $this->intIdFrecuencia);
         $request = $this->select($sql, $arrData);
@@ -47,9 +46,8 @@ class FrecuenciaModel extends Mysql
 
     public function getFrecuencias()
     {
-        $sql = "SELECT idfrecuencia,
-							frecuencia,
-							DATE_FORMAT(datecreated, '%d-%m-%Y') as fechaRegistro
+        $sql = "SELECT idfrecuencia, nombre, dias, descripcion,
+							DATE_FORMAT(fecharegistro, '%d-%m-%Y') as fechaRegistro
 							FROM frecuencia WHERE status != 0 ORDER BY idfrecuencia DESC";
         $request = $this->select_all($sql);
         return $request;

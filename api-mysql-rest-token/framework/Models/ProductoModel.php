@@ -48,7 +48,7 @@ class ProductoModel extends Mysql
     {
         $this->intIdProducto = $idproducto;
         $sql = "SELECT idproducto,codigo,nombre,descripcion,precio,
-                    DATE_FORMAT(datecreated, '%d-%m-%Y') as fechaRegistro
+                    DATE_FORMAT(fecharegistro, '%d-%m-%Y') as fechaRegistro
                      FROM producto WHERE idproducto = :id AND status != 0";
         $arrData = array(":id" => $this->intIdProducto);
         $request = $this->select($sql, $arrData);
@@ -58,7 +58,7 @@ class ProductoModel extends Mysql
     public function getProductos()
     {
         $sql = "SELECT idproducto,codigo,nombre,descripcion,precio,
-                    DATE_FORMAT(datecreated, '%d-%m-%Y') as fechaRegistro
+                    DATE_FORMAT(fecharegistro, '%d-%m-%Y') as fechaRegistro
                     FROM producto WHERE status != 0 ORDER BY idproducto DESC ";
         $request = $this->select_all($sql);
         return $request;

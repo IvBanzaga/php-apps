@@ -1,3 +1,50 @@
+body.dark-mode .timesession-modal {
+    background: #232526;
+    color: #e0e0e0;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+}
+body.dark-mode .timesession-modal h2 {
+    color: #ffd700;
+}
+body.dark-mode .timesession-modal .option-btn {
+    background: #333;
+    color: #ffd700;
+    border: 1px solid #444;
+}
+body.dark-mode .timesession-modal .option-btn:hover {
+    background: #444;
+    border-color: #ffd700;
+}
+body.dark-mode .timesession-modal .break-btn {
+    border-color: #ff9800;
+    color: #ff9800;
+}
+body.dark-mode .timesession-modal .break-btn:hover {
+    background: #232526;
+}
+body.dark-mode .timesession-modal input,
+body.dark-mode .timesession-modal select,
+body.dark-mode .timesession-modal textarea {
+    background: #222;
+    color: #e0e0e0;
+    border: 1px solid #444;
+}
+body.dark-mode .timesession-modal button {
+    background: #333;
+    color: #ffd700;
+}
+body.dark-mode .timesession-modal #startBtn,
+body.dark-mode .timesession-modal #startBreakBtn,
+body.dark-mode .timesession-modal #confirmContinue {
+    background: #4CAF50;
+    color: #ffd700;
+}
+body.dark-mode .timesession-modal #cancelBtn,
+body.dark-mode .timesession-modal #cancelBreakBtn,
+body.dark-mode .timesession-modal #stopAndChange {
+    background: #a94442;
+    color: #ffd700;
+}
 /* content.css */
 #timesession-modal-container, #timesession-validation-container {
     position: fixed;

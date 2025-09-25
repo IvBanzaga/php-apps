@@ -5,6 +5,25 @@
 let sessions = [];
 
 document.addEventListener('DOMContentLoaded', () => {
+    // MODO OSCURO: cargar preferencia y aplicar
+    chrome.storage.local.get(['darkMode'], (data) => {
+        if (data.darkMode) {
+            document.body.classList.add('dark-mode');
+        }
+    });
+    // Listener para el botón de modo oscuro
+    const darkBtn = document.getElementById('darkModeBtn');
+    if (darkBtn) {
+        darkBtn.addEventListener('click', () => {
+            const isDark = document.body.classList.toggle('dark-mode');
+            chrome.storage.local.set({ darkMode: isDark });
+            darkBtn.textContent = isDark ? '☀️ Modo Claro' : '🌙 Modo Oscuro';
+        });
+        // Cambiar texto según estado inicial
+        chrome.storage.local.get(['darkMode'], (data) => {
+            darkBtn.textContent = data.darkMode ? '☀️ Modo Claro' : '🌙 Modo Oscuro';
+        });
+    }
     if (typeof debugStorage === 'function') debugStorage();
 
     // Log completo de storage al cargar el dashboard
@@ -12,6 +31,36 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     loadDashboardData();
+
+        // Listeners para control de sesión
+        const pauseBtn = document.getElementById('csPauseBtn');
+        const resumeBtn = document.getElementById('csResumeBtn');
+        const endBtn = document.getElementById('csEndBtn');
+
+        if (pauseBtn) {
+            pauseBtn.addEventListener('click', () => {
+                chrome.runtime.sendMessage({ action: 'pauseSession' }, () => {
+                    pauseBtn.style.display = 'none';
+                    resumeBtn.style.display = 'inline-block';
+                });
+            });
+        }
+        if (resumeBtn) {
+            resumeBtn.addEventListener('click', () => {
+                chrome.runtime.sendMessage({ action: 'resumeSession' }, () => {
+                    resumeBtn.style.display = 'none';
+                    pauseBtn.style.display = 'inline-block';
+                });
+            });
+        }
+        if (endBtn) {
+            endBtn.addEventListener('click', () => {
+                chrome.runtime.sendMessage({ action: 'endSession' }, () => {
+                    document.getElementById('currentSessionBar').style.display = 'none';
+                    loadDashboardData();
+                });
+            });
+        }
     // Mostrar barra de sesión o descanso actual (función reutilizable)
     let sessionTimerInterval = null;
     function updateSessionBar() {

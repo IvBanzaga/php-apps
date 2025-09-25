@@ -117,6 +117,25 @@ function showStatus(message, type) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+  // MODO OSCURO: cargar preferencia y aplicar
+  chrome.storage.local.get(['darkMode'], function(data) {
+    if (data.darkMode) {
+      document.body.classList.add('dark-mode');
+    }
+  });
+  // Listener para el botón de modo oscuro
+  var darkBtn = document.getElementById('darkModeBtn');
+  if (darkBtn) {
+    darkBtn.addEventListener('click', function() {
+      var isDark = document.body.classList.toggle('dark-mode');
+      chrome.storage.local.set({ darkMode: isDark });
+      darkBtn.textContent = isDark ? '☀️ Modo Claro' : '🌙 Modo Oscuro';
+    });
+    // Cambiar texto según estado inicial
+    chrome.storage.local.get(['darkMode'], function(data) {
+      darkBtn.textContent = data.darkMode ? '☀️ Modo Claro' : '🌙 Modo Oscuro';
+    });
+  }
   loadSettings(function() {
     loadClients(function() {
       updateClientsList();

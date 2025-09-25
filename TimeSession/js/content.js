@@ -19,6 +19,7 @@
             <div class="timesession-overlay"></div>
             <div class="timesession-modal" style="position: relative;">
                 <button id="closeModalBtn" style="position: absolute; top: 12px; right: 16px; background: none; border: none; font-size: 22px; color: #888; cursor: pointer; z-index: 10;">&times;</button>
+                <button id="darkModeModalBtn" style="position: absolute; top: 12px; right: 48px; background: none; border: none; font-size: 22px; color: #888; cursor: pointer; z-index: 10;">🌙</button>
                 <h2>⏱️ ¿Qué vas a hacer?</h2>
                 <button class="option-btn work-btn" data-type="personal">👤 Para mí</button>
                 <button class="option-btn work-btn" data-type="client">🏢 Para un cliente</button>
@@ -52,6 +53,30 @@
             // Listener para cerrar con la X
             const closeBtn = modal.querySelector('#closeModalBtn');
             if (closeBtn) closeBtn.onclick = hideInitialModal;
+            // Listener para modo oscuro
+            const darkBtn = modal.querySelector('#darkModeModalBtn');
+            if (darkBtn) {
+                chrome.storage.local.get(['darkMode'], function(data) {
+                    if (data.darkMode) {
+                        document.body.classList.add('dark-mode');
+                        darkBtn.textContent = '☀️';
+                    } else {
+                        document.body.classList.remove('dark-mode');
+                        darkBtn.textContent = '🌙';
+                    }
+                });
+                darkBtn.onclick = function() {
+                    const isDark = !document.body.classList.contains('dark-mode');
+                    if (isDark) {
+                        document.body.classList.add('dark-mode');
+                        darkBtn.textContent = '☀️';
+                    } else {
+                        document.body.classList.remove('dark-mode');
+                        darkBtn.textContent = '🌙';
+                    }
+                    chrome.storage.local.set({ darkMode: isDark });
+                };
+            }
         } else {
             window.addEventListener('DOMContentLoaded', () => {
                 if (!document.body.contains(modal)) {

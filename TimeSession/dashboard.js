@@ -14,6 +14,59 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     loadDashboardData();
+    // Mostrar barra de sesión o descanso actual (función reutilizable)
+    function updateSessionBar() {
+        chrome.storage.local.get(['currentSession', 'breakInfo'], data => {
+            const bar = document.getElementById('currentSessionBar');
+            if (!bar) return;
+            if (data.breakInfo) {
+                // Mostrar barra de descanso
+                bar.style.display = 'block';
+                bar.innerHTML = `
+                    <div style="background: #fff; padding: 16px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <div style="font-weight:600;">☕ Descanso activo</div>
+                            <div style="color:#666; font-size:14px;">Tiempo restante</div>
+                        </div>
+                        <div style="text-align:right">
+                            <div id="breakTime" style="font-weight:700; font-size:18px; color:#ff9800;">${getBreakTime(data.breakInfo)}</div>
+                            <div style="margin-top:8px; display:flex; gap:8px; justify-content:flex-end;">
+                                <button id="endBreakBtn" class="btn-small btn-danger">⏹️ Finalizar descanso</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('endBreakBtn').onclick = () => {
+                    chrome.runtime.sendMessage({ action: 'endBreak' }, () => {
+                        bar.style.display = 'none';
+                        loadDashboardData();
+                    });
+                };
+            } else if (data.currentSession) {
+                // Mostrar barra de sesión normal (ya está en el HTML)
+                bar.style.display = 'block';
+            } else {
+                bar.style.display = 'none';
+            }
+        });
+    }
+    // Llamar al cargar
+    updateSessionBar();
+    // Escuchar cambios en el storage para breakInfo y currentSession
+    chrome.storage.onChanged.addListener((changes, area) => {
+        if (area === 'local' && (changes.breakInfo || changes.currentSession)) {
+            updateSessionBar();
+        }
+    });
+// Función para mostrar el tiempo restante de descanso
+function getBreakTime(breakInfo) {
+    if (!breakInfo || !breakInfo.endTime) return '';
+    const ms = breakInfo.endTime - Date.now();
+    if (ms <= 0) return '0m 00s';
+    const min = Math.floor(ms / 60000);
+    const sec = Math.floor((ms % 60000) / 1000);
+    return `${min}m ${sec.toString().padStart(2, '0')}s`;
+}
 
     document.getElementById('exportBtn').addEventListener('click', exportToCSV);
     document.getElementById('cleanDataBtn').addEventListener('click', cleanCorruptedData);

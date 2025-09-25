@@ -17,18 +17,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Actualizar vista según estado
     function updateView() {
+        const breakControls = document.getElementById('breakControls');
         if (breakInfo) {
             noActivityEl.style.display = 'none';
             typeEl.textContent = '☕ Descanso';
             descEl.textContent = `Duración: ${breakInfo.duration} min`;
             startBreakTimer();
             sessionControls.style.display = 'none';
+            breakControls.style.display = 'flex';
         } else if (currentSession) {
             noActivityEl.style.display = 'none';
             typeEl.textContent = currentSession.type || '';
             descEl.textContent = currentSession.description || '';
             startSessionTimer();
             sessionControls.style.display = 'flex';
+            breakControls.style.display = 'none';
             // Mostrar/ocultar botones según estado
             if (currentSession.isPaused) {
                 pauseBtn.style.display = 'none';
@@ -45,6 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
             timerEl.textContent = '0m 00s';
             if (timerInterval) clearInterval(timerInterval);
             sessionControls.style.display = 'none';
+            breakControls.style.display = 'none';
         }
     }
 
@@ -135,4 +139,18 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
     });
+
+    // Botón finalizar descanso
+    const endBreakBtn = document.getElementById('endBreakBtn');
+    if (endBreakBtn) {
+        endBreakBtn.addEventListener('click', () => {
+            chrome.runtime.sendMessage({ action: 'endBreak' }, () => {
+                chrome.runtime.sendMessage({ action: 'checkState' }, (response) => {
+                    currentSession = response?.currentSession || null;
+                    breakInfo = response?.breakInfo || null;
+                    updateView();
+                });
+            });
+        });
+    }
 });

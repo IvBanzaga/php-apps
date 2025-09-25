@@ -17,7 +17,6 @@ chrome.runtime.onStartup.addListener(() => {
 
         if (needRestore) {
             chrome.storage.local.set(restoreObj, () => {
-                console.log('TimeSession: Storage restaurado desde backup');
             });
         }
     });
@@ -26,24 +25,19 @@ chrome.runtime.onStartup.addListener(() => {
 
 // Inicialización
 chrome.runtime.onInstalled.addListener(() => {
-    console.log('TimeSession Background: Extension instalada/actualizada');
     chrome.alarms.create('updateIconAlarm', { periodInMinutes: 1 });
 });
 
 // Log de storage al arrancar el worker
 chrome.storage.local.get(null, (data) => {
-    console.log('TimeSession Background: Storage al arrancar worker:', JSON.stringify(data));
     if (data.sessions) {
-        console.log('TimeSession Background: Sesiones al arrancar:', JSON.stringify(data.sessions));
     }
 });
 
 // Mensajería
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    console.log('TimeSession Background: Mensaje recibido', request);
 
     if (!request?.action) {
-        console.log('TimeSession Background: No hay action en el request');
         return;
     }
 
@@ -70,7 +64,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         openDashboard: () => openDashboard()
     };
 
-// Editar sesión
+/* TODO: Edita una sesión existente con nuevos datos */
 function editSession({ sessionId, description, client, notes }, sendResponse) {
     chrome.storage.local.get(['sessions'], data => {
         const sessions = data.sessions || [];
@@ -92,7 +86,7 @@ function editSession({ sessionId, description, client, notes }, sendResponse) {
     return true; // 👈 importante
 }
 
-// Editar cliente
+/* TODO: Edita el nombre de un cliente existente */
 function editClient({ clientId, name }, sendResponse) {
     chrome.storage.local.get(['clients'], data => {
         const clients = data.clients || [];
@@ -108,22 +102,19 @@ function editClient({ clientId, name }, sendResponse) {
     });
     return true; // 👈 importante
 }
-// Abrir dashboard.html en una nueva pestaña
+/* TODO: Abre el dashboard en una nueva pestaña */
 function openDashboard() {
     chrome.tabs.create({ url: chrome.runtime.getURL('dashboard.html') });
 }
 
     // Acciones que requieren sendResponse asíncrono explícito
     if (request.action === 'addClient') {
-        console.log('TimeSession Background: Procesando addClient');
         addClient(request, sendResponse);
         return true; // << Importante para respuestas asíncronas
     }
 
     if (request.action === 'getClients') {
-        console.log('TimeSession Background: Procesando getClients');
         chrome.storage.local.get('clients', ({ clients = [] }) => {
-            console.log('TimeSession Background: Enviando clientes:', clients);
             sendResponse(clients);
         });
         return true; // << Importante para respuestas asíncronas
@@ -132,7 +123,6 @@ function openDashboard() {
     // Acciones con manejo directo
     if (map[request.action]) {
         try {
-            console.log(`TimeSession Background: Ejecutando ${request.action}`);
             const result = map[request.action](request, sendResponse);
             // Si la función maneja asíncrono, debe retornar true
             if (result === true) return true;
@@ -141,19 +131,15 @@ function openDashboard() {
             if (sendResponse) sendResponse({ success: false, error: String(err) });
         }
     } else {
-        console.log(`TimeSession Background: Acción no reconocida: ${request.action}`);
     }
 });
 
 // Alarmas
 chrome.alarms.onAlarm.addListener((alarm) => {
-    console.log('TimeSession Background: Alarma disparada:', alarm.name);
     if (!alarm) return;
     if (alarm.name === 'sessionValidation') {
-        console.log('TimeSession Background: Mostrando modal de validación');
         showModalInActiveTab('showValidationModal');
     } else if (alarm.name === 'breakOver') {
-        console.log('TimeSession Background: Descanso terminado');
         endBreak();
         showModalInActiveTab('showInitialModal');
     } else if (alarm.name === 'updateIconAlarm') {
@@ -163,7 +149,6 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 
 // Listener para cuando se abren nuevas pestañas
 chrome.tabs.onActivated.addListener((activeInfo) => {
-    console.log('TimeSession Background: Nueva pestaña activada:', activeInfo.tabId);
     // Pequeño delay para asegurar que el content script se haya cargado
     setTimeout(() => {
         checkAndShowModalIfNeeded(activeInfo.tabId);
@@ -172,35 +157,30 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     if (changeInfo.status === 'complete' && tab.url && !tab.url.startsWith('chrome://')) {
-        console.log('TimeSession Background: Página cargada completamente:', tab.url);
         setTimeout(() => {
             checkAndShowModalIfNeeded(tabId);
         }, 1000);
     }
 });
 
-// Función auxiliar para verificar si mostrar modal
+/* TODO: Verifica si se debe mostrar el modal inicial en la pestaña activa */
 function checkAndShowModalIfNeeded(tabId) {
     chrome.storage.local.get(['currentSession', 'breakInfo'], (data) => {
-        console.log('TimeSession Background: Estado actual para nueva pestaña:', data);
         
         // Si no hay sesión activa ni descanso, mostrar modal
         if (!data.currentSession && !data.breakInfo) {
-            console.log('TimeSession Background: No hay sesión activa, enviando showInitialModal a pestaña', tabId);
             chrome.tabs.sendMessage(tabId, { action: 'showInitialModal' }, (response) => {
                 if (chrome.runtime.lastError) {
-                    console.log('TimeSession Background: Error enviando mensaje a pestaña (normal si no hay content script):', chrome.runtime.lastError.message);
                 }
             });
         }
     });
 }
 
-// ------------------ Storage normalization ------------------
+/* TODO: Normaliza la estructura de los datos en storage */
 function normalizeStorage() {
     return new Promise((resolve) => {
         chrome.storage.local.get(['clients', 'sessions', 'currentSession', 'breakInfo', 'config'], (data) => {
-            console.log('TimeSession Background: Normalizando storage:', data);
             const rawClients = data.clients || [];
             const cleanClients = rawClients.reduce((acc, c) => {
                 if (!c) return acc;
@@ -216,14 +196,11 @@ function normalizeStorage() {
     });
 }
 
+/* TODO: Elimina un cliente por su ID */
 function deleteClient({ clientId }, sendResponse) {
-    console.log('TimeSession Background: deleteClient recibido', clientId);
     chrome.storage.local.get('clients', ({ clients = [] }) => {
         const updated = (clients || []).filter(c => c && c.id !== clientId);
-        console.log('TimeSession Background: Clientes antes de eliminar:', clients);
-        console.log('TimeSession Background: Clientes después de eliminar:', updated);
         chrome.storage.local.set({ clients: updated }, () => {
-            console.log('TimeSession Background: Cliente eliminado');
             backupStorage();
             if (sendResponse) sendResponse({ success: true, clients: updated });
         });
@@ -231,9 +208,8 @@ function deleteClient({ clientId }, sendResponse) {
     return true; // 👈 importante
 }
 
-// ------------------ Data reset ------------------
+/* TODO: Resetea todos los datos de la extensión a valores iniciales */
 function resetData(request, sendResponse) {
-    console.log('TimeSession Background: Reseteando datos');
     chrome.storage.local.clear(() => {
         chrome.storage.local.set({ clients: [], sessions: [], currentSession: null, breakInfo: null, config: { validationInterval: 60 } }, () => {
             updateIcon();
@@ -242,9 +218,8 @@ function resetData(request, sendResponse) {
     });
 }
 
-// ------------------ Session lifecycle ------------------
+/* TODO: Inicia una nueva sesión y termina el descanso si existe */
 function startSession({ session }, sendResponse) {
-    console.log('TimeSession Background: startSession llamado con:', session);
 
     try {
         // Terminar descanso activo si existe
@@ -273,7 +248,6 @@ function startSession({ session }, sendResponse) {
             // Actualizar icono en la barra de extensión
             updateIcon();
 
-            console.log('TimeSession Background: Sesión iniciada correctamente:', newSession);
             if (sendResponse) sendResponse({ success: true, currentSession: newSession });
         });
     } catch (err) {
@@ -283,8 +257,8 @@ function startSession({ session }, sendResponse) {
 }
 
 
+/* TODO: Pausa la sesión activa */
 function pauseSession() {
-    console.log('TimeSession Background: pauseSession');
     chrome.storage.local.get('currentSession', ({ currentSession }) => {
         if (currentSession && !currentSession.isPaused) {
             const elapsed = currentSession.startTime ? (Date.now() - currentSession.startTime) : 0;
@@ -293,26 +267,24 @@ function pauseSession() {
             currentSession.pauseTime = Date.now();
             currentSession.startTime = null;
             chrome.storage.local.set({ currentSession }, updateIcon);
-            console.log('TimeSession Background: Sesión pausada');
         }
     });
 }
 
+/* TODO: Reanuda la sesión pausada */
 function resumeSession() {
-    console.log('TimeSession Background: resumeSession');
     chrome.storage.local.get('currentSession', ({ currentSession }) => {
         if (currentSession && currentSession.isPaused) {
             currentSession.isPaused = false;
             currentSession.startTime = Date.now();
             currentSession.pauseTime = null;
             chrome.storage.local.set({ currentSession }, updateIcon);
-            console.log('TimeSession Background: Sesión reanudada');
         }
     });
 }
 
+/* TODO: Finaliza la sesión activa y la guarda en el historial */
 function endSession() {
-    console.log('TimeSession Background: endSession');
     chrome.storage.local.get(['currentSession', 'sessions'], (data) => {
         const currentSession = data.currentSession;
         let sessions = Array.isArray(data.sessions) ? [...data.sessions] : [];
@@ -326,64 +298,58 @@ function endSession() {
     // Remove runtime-only fields, pero conservar startTime para historial
     delete finalSession.isPaused; delete finalSession.initialDuration; delete finalSession.pauseTime;
         sessions.push(finalSession);
-        console.log('TimeSession Background: Array de sesiones antes de guardar:', JSON.stringify(sessions));
         chrome.storage.local.set({ sessions, currentSession: null }, () => {
             chrome.storage.local.get(['sessions'], (d) => {
-                console.log('TimeSession Background: Array de sesiones después de guardar:', JSON.stringify(d.sessions));
                 if (!d.sessions || d.sessions.length === 0) {
                     console.error('TimeSession Background: ¡Error! La sesión no se guardó correctamente.');
                 } else {
-                    console.log('TimeSession Background: Sesión guardada correctamente. Total sesiones:', d.sessions.length);
                 }
             });
             chrome.alarms.clear('sessionValidation');
             backupStorage();
             updateIcon();
-            console.log('TimeSession Background: Sesión terminada y guardada');
         });
     });
 }
 
+/* TODO: Inicia un descanso por la cantidad de minutos indicada */
 function startBreak({ minutes }, sendResponse) {
-    console.log('TimeSession Background: startBreak con minutos:', minutes);
     endSession(); // Terminar sesión activa si existe
     const mins = typeof minutes === 'number' && minutes > 0 ? minutes : 15;
     const breakInfo = { endTime: Date.now() + mins * 60000, duration: mins };
     chrome.storage.local.set({ breakInfo }, () => {
         chrome.alarms.create('breakOver', { delayInMinutes: mins });
         updateIcon();
-        console.log('TimeSession Background: Descanso iniciado:', breakInfo);
         if (sendResponse) sendResponse({ success: true, breakInfo });
     });
 }
 
+/* TODO: Finaliza el descanso activo */
 function endBreak() {
-    console.log('TimeSession Background: endBreak');
     chrome.storage.local.set({ breakInfo: null }, () => {
         chrome.alarms.clear('breakOver');
         updateIcon();
-        console.log('TimeSession Background: Descanso terminado');
     });
 }
 
+/* TODO: Elimina una sesión del historial por su ID */
 function deleteSession({ sessionId }, sendResponse) {
     chrome.storage.local.get('sessions', ({ sessions = [] }) => {
         const filtered = (sessions || []).filter(s => s.id !== sessionId);
         chrome.storage.local.set({ sessions: filtered }, () => {
-            console.log('TimeSession Background: Sesión eliminada');
             if (sendResponse) sendResponse({ success: true });
         });
     });
 }
 
-// ------------------ Helpers ------------------
+/* TODO: Obtiene datos de storage por clave */
 function getFromStorage(key, sendResponse) {
     chrome.storage.local.get(key, (data) => sendResponse(data[key] || []));
 }
 
+/* TODO: Devuelve el estado actual de la sesión y descanso */
 function checkState(sendResponse) {
     chrome.storage.local.get(['currentSession', 'breakInfo'], (data) => {
-        console.log('TimeSession Background: checkState resultado:', data);
         sendResponse({
             currentSession: data.currentSession || null,
             breakInfo: data.breakInfo || null,
@@ -393,25 +359,23 @@ function checkState(sendResponse) {
     return true; // Para mantener el canal de respuesta abierto
 }
 
+/* TODO: Reinicia la alarma de validación de sesión */
 function resetValidationAlarm() {
     chrome.storage.local.get('config', ({ config = {} }) => {
         const interval = (config && config.validationInterval) || 60;
         chrome.alarms.clear('sessionValidation');
         chrome.alarms.create('sessionValidation', { delayInMinutes: interval });
-        console.log(`TimeSession Background: Alarma de validación configurada para ${interval} minutos`);
     });
 }
 
+/* TODO: Muestra el modal correspondiente en la pestaña activa */
 function showModalInActiveTab(action) {
-    console.log('TimeSession Background: showModalInActiveTab:', action);
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         if (!tabs || !tabs[0] || !tabs[0].id) {
-            console.log('TimeSession Background: No hay pestaña activa');
             return;
         }
         const url = tabs[0].url || '';
         if (url.startsWith('chrome://') || url.startsWith('https://chrome.google.com')) {
-            console.log('TimeSession Background: Pestaña es de sistema, no enviar mensaje');
             return;
         }
         console.log('TimeSession Background: Enviando mensaje a pestaña:', tabs[0].id);
@@ -423,6 +387,7 @@ function showModalInActiveTab(action) {
     });
 }
 
+/* TODO: Actualiza el icono y badge de la extensión según el estado */
 function updateIcon() {
     chrome.storage.local.get(['currentSession', 'breakInfo'], (data) => {
         const cs = data && data.currentSession;
@@ -444,7 +409,7 @@ function updateIcon() {
     });
 }
 
-// Guardar respaldo de datos críticos
+/* TODO: Guarda un respaldo de los datos críticos en storage */
 function backupStorage() {
     chrome.storage.local.get(['sessions', 'clients'], (data) => {
         chrome.storage.local.set({

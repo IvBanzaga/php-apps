@@ -3,21 +3,16 @@
     if (window.hasRun) return;
     window.hasRun = true;
 
-    console.log('TimeSession: Content script iniciado');
 
     let modal = null;
     let validationModal = null;
     let selectedType = null;
 
-    // Mostrar modal inicial
+    /* TODO: Muestra el modal inicial para iniciar sesión o descanso */
     function showInitialModal() {
-        console.log('TimeSession: showInitialModal llamado');
         if (modal) {
-            console.log('TimeSession: Modal ya existe, no crear otro');
             return;
         }
-
-        console.log('TimeSession: Creando modal');
         modal = document.createElement('div');
         modal.id = 'timesession-modal-container';
         modal.innerHTML = `
@@ -50,16 +45,15 @@
         if (document.body) {
             document.body.appendChild(modal);
             document.body.style.overflow = 'hidden';
-            console.log('TimeSession: Modal agregado al DOM');
+            // Modal agregado al DOM
             loadClients();
             addModalListeners();
         } else {
-            console.warn('TimeSession: No existe document.body, esperando DOMContentLoaded');
             window.addEventListener('DOMContentLoaded', () => {
                 if (!document.body.contains(modal)) {
                     document.body.appendChild(modal);
                     document.body.style.overflow = 'hidden';
-                    console.log('TimeSession: Modal agregado al DOM (tras DOMContentLoaded)');
+                    // Modal agregado al DOM (tras DOMContentLoaded)
                     loadClients();
                     addModalListeners();
                 }
@@ -67,18 +61,17 @@
         }
     }
 
+    /* TODO: Oculta y elimina el modal inicial del DOM */
     function hideInitialModal() {
-        console.log('TimeSession: hideInitialModal llamado');
         if (modal) {
             modal.remove();
             modal = null;
             document.body.style.overflow = 'auto';
-            console.log('TimeSession: Modal removido');
         }
     }
 
+    /* TODO: Añade listeners a los botones del modal inicial */
     function addModalListeners() {
-        console.log('TimeSession: Agregando listeners');
         modal.querySelectorAll('.option-btn').forEach(btn => {
             btn.onclick = () => handleActivitySelection(btn.dataset.type);
         });
@@ -96,8 +89,8 @@
         if (cancelBreakBtn) cancelBreakBtn.onclick = resetModalView;
     }
 
+    /* TODO: Maneja la selección de tipo de actividad en el modal */
     function handleActivitySelection(type) {
-        console.log('TimeSession: Actividad seleccionada:', type);
         selectedType = type;
         modal.querySelector('#clientSection').classList.add('hidden');
         modal.querySelector('#taskSection').classList.add('hidden');
@@ -113,21 +106,20 @@
         }
     }
 
+    /* TODO: Resetea la vista del modal a estado inicial */
     function resetModalView() {
-        console.log('TimeSession: resetModalView');
         modal.querySelector('#clientSection').classList.add('hidden');
         modal.querySelector('#taskSection').classList.add('hidden');
         modal.querySelector('#breakSection').classList.add('hidden');
         selectedType = null;
     }
 
+    /* TODO: Carga la lista de clientes en el select del modal */
     function loadClients() {
-        console.log('TimeSession: Cargando clientes');
         const select = modal.querySelector('#clientSelect');
         select.innerHTML = '<option value="">Seleccionar cliente...</option>';
 
         chrome.runtime.sendMessage({ action: "getClients" }, (response) => {
-            console.log('TimeSession: Clientes recibidos:', response);
             if (response && response.length) {
                 response.forEach(client => {
                     if (!client || !client.name) return;
@@ -140,8 +132,8 @@
         });
     }
 
+    /* TODO: Inicia una nueva sesión con los datos del modal */
     function startSession() {
-        console.log('TimeSession: startSession');
 
         const description = modal.querySelector('#taskDescription').value.trim();
         let client = null;
@@ -183,24 +175,20 @@
             }
         };
 
-        console.log('TimeSession: Enviando mensaje startSession:', sessionData);
 
         chrome.runtime.sendMessage(sessionData, (response) => {
-            console.log('TimeSession: Respuesta startSession:', response);
             if (response && response.success) {
                 hideInitialModal();
             } else {
-                console.error('TimeSession: Error al iniciar sesión:', response);
             }
         });
     }
 
+    /* TODO: Inicia un descanso con la duración indicada en el modal */
     function startBreak() {
-        console.log('TimeSession: startBreak');
         const minutes = parseInt(modal.querySelector('#breakMinutes').value, 10);
         if (minutes > 0) {
             chrome.runtime.sendMessage({ action: "startBreak", minutes }, (response) => {
-                console.log('TimeSession: Respuesta startBreak:', response);
                 hideInitialModal();
             });
         }
@@ -208,52 +196,45 @@
 
     // Listener para mensajes del background
     chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-        console.log('TimeSession: Mensaje recibido en content script:', request);
         
         if (request.action === "showInitialModal") {
-            console.log('TimeSession: Mostrando modal por mensaje');
             showInitialModal();
         } else if (request.action === "showValidationModal") {
             // Aquí puedes agregar la lógica para el modal de validación
-            console.log('TimeSession: Debería mostrar modal de validación');
         }
     });
 
     // Función para forzar mostrar modal (para debugging)
     window.timeSessionForceModal = function() {
-        console.log('TimeSession: Forzando modal desde consola');
         showInitialModal();
     };
 
     // Auto-check cuando se carga la página
-    console.log('TimeSession: Verificando estado inicial');
     
     // Verificar estado actual
     chrome.runtime.sendMessage({ action: "checkState" }, (response) => {
-        console.log('TimeSession: Estado actual:', response);
         
         // Si no hay sesión activa ni descanso, mostrar modal
         if (!response || (!response.currentSession && !response.breakInfo)) {
-            console.log('TimeSession: No hay sesión activa, mostrando modal inicial');
+            // No hay sesión activa, mostrando modal inicial
             showInitialModal();
         } else {
-            console.log('TimeSession: Hay sesión/descanso activo, no mostrar modal');
+            // Hay sesión/descanso activo, no mostrar modal
         }
     });
 
     // También escuchar cuando la página se enfoca (por si acaso)
     window.addEventListener('focus', () => {
-        console.log('TimeSession: Ventana enfocada, verificando estado');
         chrome.runtime.sendMessage({ action: "checkState" }, (response) => {
             if (!response || (!response.currentSession && !response.breakInfo)) {
                 // Solo mostrar si no hay modal ya
                 if (!modal) {
-                    console.log('TimeSession: Mostrando modal por enfoque de ventana');
+                    // Mostrando modal por enfoque de ventana
                     showInitialModal();
                 }
             }
         });
     });
 
-    console.log('TimeSession: Content script configurado completamente');
+    // Content script configurado completamente
 })();

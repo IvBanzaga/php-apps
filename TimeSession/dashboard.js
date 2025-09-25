@@ -1,6 +1,5 @@
 // dashboard.js - JavaScript optimizado para el dashboard
 
-console.log('Dashboard cargado');
 
 // Variable global para sesiones
 let sessions = [];
@@ -10,7 +9,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Log completo de storage al cargar el dashboard
     chrome.storage.local.get(null, (data) => {
-        console.log('Dashboard: Storage completo al cargar:', JSON.stringify(data));
     });
 
     loadDashboardData();
@@ -58,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
             updateSessionBar();
         }
     });
-// Función para mostrar el tiempo restante de descanso
+/* TODO: Devuelve el tiempo restante del descanso activo en formato mm:ss */
 function getBreakTime(breakInfo) {
     if (!breakInfo || !breakInfo.endTime) return '';
     const ms = breakInfo.endTime - Date.now();
@@ -86,6 +84,7 @@ function getBreakTime(breakInfo) {
     }
 });
 
+/* TODO: Añade listeners a los botones del modal principal */
 function addModalListeners() {
     modal.querySelectorAll('.option-btn').forEach(btn => {
         btn.onclick = () => handleActivitySelection(btn.dataset.type);
@@ -102,12 +101,12 @@ function addModalListeners() {
 
 
 
+/* TODO: Carga los datos de sesiones y clientes y actualiza la vista del dashboard */
 function loadDashboardData() {
     chrome.storage.local.get(['sessions', 'clients'], (data) => {
         sessions = data.sessions || [];
         const clients = data.clients || [];
 
-        console.log('Datos cargados:', { sessions: sessions.length, clients: clients.length });
 
         updateStats(sessions, clients);
         renderClientsList(clients);
@@ -116,6 +115,7 @@ function loadDashboardData() {
     });
 }
 
+/* TODO: Actualiza las estadísticas principales del dashboard */
 function updateStats(sessions, clients) {
     // Filtrar sesiones finalizadas (tienen endTime y duration)
     const completedSessions = sessions.filter(s => s.endTime && typeof s.duration === 'number');
@@ -132,9 +132,9 @@ function updateStats(sessions, clients) {
     document.getElementById('avgSession').textContent = (isNaN(avgSessionMins) ? 0 : avgSessionMins) + 'm';
 }
 
+/* TODO: Renderiza la lista de sesiones en el dashboard */
 function renderSessionsList(sessions) {
     const container = document.getElementById('sessionsList');
-    console.log('Dashboard: Sesiones recibidas para renderizar:', sessions);
     if (!sessions || sessions.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
@@ -183,16 +183,19 @@ function renderSessionsList(sessions) {
     createTimeChart(sessions.filter(s => s.endTime));
 }
 
+/* TODO: Devuelve el icono correspondiente al tipo de sesión */
 function getTypeIcon(type) {
     const icons = { personal: '👤', client: '💼', learning: '📚', programming: '💻' };
     return icons[type] || '📝';
 }
 
+/* TODO: Devuelve la etiqueta legible para el tipo de sesión */
 function getTypeLabel(type) {
     const labels = { personal: 'Para mí', client: 'Cliente', learning: 'Aprendizaje', programming: 'Programando' };
     return labels[type] || type;
 }
 
+/* TODO: Exporta las sesiones a un archivo CSV descargable */
 function exportToCSV() {
     chrome.storage.local.get(['sessions'], (data) => {
         const sessions = data.sessions || [];
@@ -216,11 +219,10 @@ function exportToCSV() {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        console.log('CSV exportado exitosamente');
     });
 }
 
-// Editar y eliminar sesión
+/* TODO: Elimina una sesión del historial por su ID */
 function deleteSession(sessionId) {
     if (!confirm('¿Estás seguro de que quieres eliminar esta sesión?')) return;
     chrome.runtime.sendMessage({ action: 'deleteSession', sessionId }, response => {
@@ -232,6 +234,7 @@ function deleteSession(sessionId) {
     });
 }
 
+/* TODO: Edita los datos de una sesión existente */
 function editSession(sessionId) {
     chrome.storage.local.get(['sessions'], data => {
         const sessions = data.sessions || [];
@@ -261,7 +264,7 @@ function editSession(sessionId) {
     });
 }
 
-// Clientes
+/* TODO: Renderiza la lista de clientes en el dashboard */
 function renderClientsList(clients) {
     const container = document.getElementById('clientsList');
     if (!clients || clients.length === 0) {
@@ -284,6 +287,7 @@ function renderClientsList(clients) {
 }
 
 
+/* TODO: Actualiza el select de clientes en el formulario de sesión */
 function updateClientSelect(clients) {
     const select = document.getElementById('selectClient');
     if (!select) return;
@@ -297,6 +301,7 @@ function updateClientSelect(clients) {
     });
 }
 
+/* TODO: Añade un nuevo cliente a la lista */
 function addClient() {
     const input = document.getElementById('newClientName');
     if (!input) return alert('Error: No se encontró el campo de texto para el cliente');
@@ -317,6 +322,7 @@ function addClient() {
     });
 }
 
+/* TODO: Edita el nombre de un cliente existente */
 function editClient(clientId) {
     if (!clientId) return alert('ID de cliente inválido');
     chrome.storage.local.get(['clients'], data => {
@@ -344,6 +350,7 @@ function editClient(clientId) {
 
 
 
+/* TODO: Elimina un cliente por su ID */
 function deleteClient(clientId) {
     if (!confirm('¿Estás seguro de que quieres eliminar este cliente?')) return;
     chrome.runtime.sendMessage({ action: 'deleteClient', clientId }, response => {
@@ -359,7 +366,7 @@ function deleteClient(clientId) {
 // Gráfico
 let timeChart = null;
 
-// Función principal para crear el gráfico
+/* TODO: Crea y renderiza el gráfico de barras de tiempo por tipo de sesión */
 function createTimeChart(sessions) {
   if (typeof Chart === 'undefined') return console.error('Chart.js no está disponible');
 
@@ -434,7 +441,7 @@ function createTimeChart(sessions) {
 }
 
 
-// Filtrar sesiones según rango seleccionado
+/* TODO: Filtra las sesiones según el rango de fechas seleccionado */
 function filterSessionsByRange(sessions, range) {
   const now = new Date();
   return sessions.filter(s => {
@@ -452,14 +459,14 @@ function filterSessionsByRange(sessions, range) {
   });
 }
 
-// Formatear minutos a "Xh Ym"
+/* TODO: Formatea minutos en formato Xh Ym */
 function formatMinutes(minutes) {
   const h = Math.floor(minutes / 60);
   const m = Math.round(minutes % 60);
   return `${h}h ${m}m`;
 }
 
-// Generar colores HSL dinámicos
+/* TODO: Genera una paleta de colores HSL para el gráfico */
 function generateColors(n) {
   const colors = [];
   for(let i=0;i<n;i++){
@@ -485,7 +492,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-// Limpiar datos corruptos
+/* TODO: Limpia datos corruptos de clientes y sesiones en storage */
 function cleanCorruptedData() {
     if (!confirm('¿Estás seguro de limpiar datos corruptos? Esta acción no se puede deshacer.')) return;
     chrome.storage.local.get(['clients','sessions'], data => {
@@ -508,7 +515,7 @@ document.addEventListener('click', e => {
 });
 
 
-// Reiniciar todos los datos
+/* TODO: Elimina todos los datos y reinicia la extensión */
 function resetAllData() {
     if (!confirm('⚠️ Esto eliminará TODOS los datos. ¿Continuar?')) return;
     if (!confirm('🚨 ÚLTIMA CONFIRMACIÓN: Se perderán TODOS los datos permanentemente. ¿Continuar?')) return;

@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let breakInfo = null;
     let timerInterval;
 
-    // Actualizar vista según estado
+    /* TODO: Actualiza la vista del popup según el estado actual (sesión, descanso, inactivo) */
     function updateView() {
         const breakControls = document.getElementById('breakControls');
         if (breakInfo) {
@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Temporizador para sesión activa
+    /* TODO: Inicia y actualiza el temporizador de la sesión activa */
     function startSessionTimer() {
         if (timerInterval) clearInterval(timerInterval);
         timerInterval = setInterval(() => {
@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 1000);
     }
 
-    // Temporizador para descanso
+    /* TODO: Inicia y actualiza el temporizador del descanso */
     function startBreakTimer() {
         if (timerInterval) clearInterval(timerInterval);
         timerInterval = setInterval(() => {
@@ -81,21 +81,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 1000);
     }
 
-    // Formatear duración en mm:ss
+    /* TODO: Formatea la duración en formato mm:ss */
     function formatDuration(totalSeconds) {
         const minutes = Math.floor(totalSeconds / 60);
         const seconds = totalSeconds % 60;
         return `${minutes}m ${seconds.toString().padStart(2,'0')}s`;
     }
 
-    // Al cargar popup, pedir estado actual al background
+    /* TODO: Al cargar el popup, solicita el estado actual al background */
     chrome.runtime.sendMessage({ action: 'checkState' }, (response) => {
         currentSession = response?.currentSession || null;
         breakInfo = response?.breakInfo || null;
         updateView();
     });
 
-    // Botón de iniciar sesión
+    /* TODO: Evento para iniciar una sesión rápida desde el popup */
     startBtn.addEventListener('click', () => {
         chrome.runtime.sendMessage({ action: 'showInitialModal' });
         window.close();
@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.close();
     });
 
-    // Botón pausar sesión
+    /* TODO: Evento para pausar la sesión activa */
     pauseBtn.addEventListener('click', () => {
         chrome.runtime.sendMessage({ action: 'pauseSession' }, () => {
             // Actualizar estado tras pausar
@@ -118,7 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Botón reanudar sesión
+    /* TODO: Evento para reanudar la sesión pausada */
     resumeBtn.addEventListener('click', () => {
         chrome.runtime.sendMessage({ action: 'resumeSession' }, () => {
             chrome.runtime.sendMessage({ action: 'checkState' }, (response) => {
@@ -129,7 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Botón finalizar sesión
+    /* TODO: Evento para finalizar la sesión activa */
     endBtn.addEventListener('click', () => {
         chrome.runtime.sendMessage({ action: 'endSession' }, () => {
             chrome.runtime.sendMessage({ action: 'checkState' }, (response) => {
@@ -140,7 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Botón finalizar descanso
+    /* TODO: Evento para finalizar el descanso activo */
     const endBreakBtn = document.getElementById('endBreakBtn');
     if (endBreakBtn) {
         endBreakBtn.addEventListener('click', () => {

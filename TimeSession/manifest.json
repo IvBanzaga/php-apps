@@ -13,23 +13,23 @@
     "scripting"
   ],
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "js/background.js"
   },
   "action": {
-    "default_popup": "popup.html",
+    "default_popup": "html/popup.html",
     "default_title": "TimeSession"
   },
-  "options_page": "options.html",
+  "options_page": "html/options.html",
   "content_scripts": [
     {
       "matches": [
         "<all_urls>"
       ],
       "js": [
-        "content.js"
+        "js/content.js"
       ],
       "css": [
-        "content.css"
+        "css/content.css"
       ],
       "run_at": "document_start"
     }
@@ -37,10 +37,10 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "lib/chart.js",
-        "content.css",
-        "dashboard.html",
-        "options.html"
+        "js/lib/chart.js",
+        "css/content.css",
+        "html/dashboard.html",
+        "html/options.html"
       ],
       "matches": [
         "<all_urls>"

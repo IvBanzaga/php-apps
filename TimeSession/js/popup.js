@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     dashboardBtn.addEventListener('click', () => {
-    window.open(chrome.runtime.getURL('dashboard.html'), '_blank');
+    window.open(chrome.runtime.getURL('html/dashboard.html'), '_blank');
     window.close();
     });
 

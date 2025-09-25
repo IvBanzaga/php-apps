@@ -1,9 +1,41 @@
 // background.js - Service Worker para TimeSession (versión con debug)
 
+chrome.runtime.onStartup.addListener(() => {
+    chrome.storage.local.get(['sessions', 'clients', '__backup_sessions', '__backup_clients'], (data) => {
+        let needRestore = false;
+        const restoreObj = {};
+
+        if ((!data.sessions || data.sessions.length === 0) && data.__backup_sessions?.length) {
+            restoreObj.sessions = data.__backup_sessions;
+            needRestore = true;
+        }
+
+        if ((!data.clients || data.clients.length === 0) && data.__backup_clients?.length) {
+            restoreObj.clients = data.__backup_clients;
+            needRestore = true;
+        }
+
+        if (needRestore) {
+            chrome.storage.local.set(restoreObj, () => {
+                console.log('TimeSession: Storage restaurado desde backup');
+            });
+        }
+    });
+});
+
+
 // Inicialización
 chrome.runtime.onInstalled.addListener(() => {
     console.log('TimeSession Background: Extension instalada/actualizada');
     chrome.alarms.create('updateIconAlarm', { periodInMinutes: 1 });
+});
+
+// Log de storage al arrancar el worker
+chrome.storage.local.get(null, (data) => {
+    console.log('TimeSession Background: Storage al arrancar worker:', JSON.stringify(data));
+    if (data.sessions) {
+        console.log('TimeSession Background: Sesiones al arrancar:', JSON.stringify(data.sessions));
+    }
 });
 
 // Mensajería
@@ -128,7 +160,6 @@ function normalizeStorage() {
     return new Promise((resolve) => {
         chrome.storage.local.get(['clients', 'sessions', 'currentSession', 'breakInfo', 'config'], (data) => {
             console.log('TimeSession Background: Normalizando storage:', data);
-            
             const rawClients = data.clients || [];
             const cleanClients = rawClients.reduce((acc, c) => {
                 if (!c) return acc;
@@ -136,7 +167,6 @@ function normalizeStorage() {
                 else if (typeof c === 'object' && c.name) acc.push({ id: c.id || `client_${Date.now()}_${Math.random().toString(36).slice(2,8)}`, name: c.name });
                 return acc;
             }, []);
-
             // Solo limpiar clientes, nunca modificar ni filtrar sesiones
             chrome.storage.local.set({
                 clients: cleanClients
@@ -150,6 +180,7 @@ function deleteClient({ clientId }, sendResponse) {
         const updated = (clients || []).filter(c => c && c.id !== clientId);
         chrome.storage.local.set({ clients: updated }, () => {
             console.log('TimeSession Background: Cliente eliminado');
+            backupStorage();
             if (sendResponse) sendResponse({ success: true, clients: updated });
         });
     });
@@ -251,6 +282,7 @@ function endSession() {
                 }
             });
             chrome.alarms.clear('sessionValidation');
+            backupStorage();
             updateIcon();
             console.log('TimeSession Background: Sesión terminada y guardada');
         });
@@ -356,5 +388,18 @@ function updateIcon() {
         }
     });
 }
+
+// Guardar respaldo de datos críticos
+function backupStorage() {
+    chrome.storage.local.get(['sessions', 'clients'], (data) => {
+        chrome.storage.local.set({
+            __backup_sessions: data.sessions || [],
+            __backup_clients: data.clients || []
+        }, () => {
+            console.log('TimeSession: Backup de storage guardado');
+        });
+    });
+}
+
 
 console.log('TimeSession Background: Service Worker cargado');

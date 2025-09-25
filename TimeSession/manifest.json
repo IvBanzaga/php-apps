@@ -5,6 +5,7 @@
   "description": "Monitor de tiempo de trabajo con sesiones y dashboard",
   "permissions": [
     "storage",
+    "unlimitedStorage",
     "alarms",
     "activeTab",
     "tabs",

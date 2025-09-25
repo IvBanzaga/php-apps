@@ -3,7 +3,12 @@ console.log('Dashboard cargado');
 
 document.addEventListener('DOMContentLoaded', () => {
     if (typeof debugStorage === 'function') debugStorage();
-    
+
+    // Log completo de storage al cargar el dashboard
+    chrome.storage.local.get(null, (data) => {
+        console.log('Dashboard: Storage completo al cargar:', JSON.stringify(data));
+    });
+
     loadDashboardData();
 
     document.getElementById('exportBtn').addEventListener('click', exportToCSV);

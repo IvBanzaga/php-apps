@@ -17,7 +17,8 @@
         modal.id = 'timesession-modal-container';
         modal.innerHTML = `
             <div class="timesession-overlay"></div>
-            <div class="timesession-modal">
+            <div class="timesession-modal" style="position: relative;">
+                <button id="closeModalBtn" style="position: absolute; top: 12px; right: 16px; background: none; border: none; font-size: 22px; color: #888; cursor: pointer; z-index: 10;">&times;</button>
                 <h2>⏱️ ¿Qué vas a hacer?</h2>
                 <button class="option-btn work-btn" data-type="personal">👤 Para mí</button>
                 <button class="option-btn work-btn" data-type="client">🏢 Para un cliente</button>
@@ -48,6 +49,9 @@
             // Modal agregado al DOM
             loadClients();
             addModalListeners();
+            // Listener para cerrar con la X
+            const closeBtn = modal.querySelector('#closeModalBtn');
+            if (closeBtn) closeBtn.onclick = hideInitialModal;
         } else {
             window.addEventListener('DOMContentLoaded', () => {
                 if (!document.body.contains(modal)) {
@@ -56,6 +60,9 @@
                     // Modal agregado al DOM (tras DOMContentLoaded)
                     loadClients();
                     addModalListeners();
+                    // Listener para cerrar con la X
+                    const closeBtn = modal.querySelector('#closeModalBtn');
+                    if (closeBtn) closeBtn.onclick = hideInitialModal;
                 }
             }, { once: true });
         }
@@ -198,7 +205,13 @@
     chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         
         if (request.action === "showInitialModal") {
-            showInitialModal();
+            chrome.storage.local.get('config', ({ config = {} }) => {
+                if (config.askOnBrowserStart === true) {
+                    showInitialModal();
+                } else {
+                    console.log('[TimeSession] Modal bloqueado por configuración askOnBrowserStart:', config.askOnBrowserStart);
+                }
+            });
         } else if (request.action === "showValidationModal") {
             // Aquí puedes agregar la lógica para el modal de validación
         }
@@ -214,10 +227,14 @@
     // Verificar estado actual
     chrome.runtime.sendMessage({ action: "checkState" }, (response) => {
         
-        // Si no hay sesión activa ni descanso, mostrar modal
+        // Si no hay sesión activa ni descanso, consultar config antes de mostrar modal
         if (!response || (!response.currentSession && !response.breakInfo)) {
-            // No hay sesión activa, mostrando modal inicial
-            showInitialModal();
+            chrome.storage.local.get('config', ({ config = {} }) => {
+                console.log('[TimeSession] Valor askOnBrowserStart:', config.askOnBrowserStart);
+                if (config.askOnBrowserStart === true) {
+                    showInitialModal();
+                }
+            });
         } else {
             // Hay sesión/descanso activo, no mostrar modal
         }
@@ -227,11 +244,13 @@
     window.addEventListener('focus', () => {
         chrome.runtime.sendMessage({ action: "checkState" }, (response) => {
             if (!response || (!response.currentSession && !response.breakInfo)) {
-                // Solo mostrar si no hay modal ya
-                if (!modal) {
-                    // Mostrando modal por enfoque de ventana
-                    showInitialModal();
-                }
+                chrome.storage.local.get('config', ({ config = {} }) => {
+                    console.log('[TimeSession] Valor askOnBrowserStart (focus):', config.askOnBrowserStart);
+                    if (!modal && config.askOnBrowserStart === true) {
+                        // Mostrando modal por enfoque de ventana
+                        showInitialModal();
+                    }
+                });
             }
         });
     });

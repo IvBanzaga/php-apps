@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     loadDashboardData();
     // Mostrar barra de sesión o descanso actual (función reutilizable)
+    let sessionTimerInterval = null;
     function updateSessionBar() {
         chrome.storage.local.get(['currentSession', 'breakInfo'], data => {
             const bar = document.getElementById('currentSessionBar');
@@ -40,13 +41,33 @@ document.addEventListener('DOMContentLoaded', () => {
                         loadDashboardData();
                     });
                 };
+                if (sessionTimerInterval) clearInterval(sessionTimerInterval);
             } else if (data.currentSession) {
                 // Mostrar barra de sesión normal (ya está en el HTML)
                 bar.style.display = 'block';
+                // Iniciar temporizador para actualizar el tiempo
+                if (sessionTimerInterval) clearInterval(sessionTimerInterval);
+                sessionTimerInterval = setInterval(() => {
+                    const csTime = document.getElementById('csTime');
+                    if (!csTime) return;
+                    let elapsed = data.currentSession.initialDuration || 0;
+                    if (!data.currentSession.isPaused && data.currentSession.startTime) {
+                        elapsed += Date.now() - data.currentSession.startTime;
+                    }
+                    const totalSeconds = Math.floor(elapsed / 1000);
+                    csTime.textContent = formatDuration(totalSeconds);
+                }, 1000);
             } else {
                 bar.style.display = 'none';
+                if (sessionTimerInterval) clearInterval(sessionTimerInterval);
             }
         });
+    }
+
+    function formatDuration(totalSeconds) {
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return `${minutes}m ${seconds.toString().padStart(2,'0')}s`;
     }
     // Llamar al cargar
     updateSessionBar();
@@ -161,20 +182,23 @@ function renderSessionsList(sessions) {
         const sessionItem = document.createElement('div');
         sessionItem.className = 'session-item';
         sessionItem.innerHTML = `
-            <div class="session-info">
-                <div class="session-title">${getTypeIcon(session.type)} ${session.description || 'Sin descripción'}</div>
-                <div class="session-meta">
-                    ${startDate.toLocaleDateString('es-ES')} • 
-                    ${startDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} - 
-                    ${endDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
-                    ${session.client ? ` • Cliente: ${session.client}` : ''}
+            <div class="session-info" style="display: flex; align-items: center; gap: 16px;">
+                <div>
+                    <div class="session-title">${getTypeIcon(session.type)} ${getTypeLabel(session.type)}</div>
+                    <div class="session-meta">
+                        ${startDate.toLocaleDateString('es-ES')} • 
+                        ${startDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} - 
+                        ${endDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                        ${session.client ? ` • Cliente: ${session.client}` : ''}
+                    </div>
                 </div>
+                <div class="session-description-box" style="background: #f8f9fa; border-radius: 8px; padding: 8px 16px; min-width: 120px; color: #333; font-size: 14px; text-align: center; align-self: center;">${session.description ? session.description : ''}</div>
             </div>
             <div class="session-actions">
                 <div class="session-duration">${duration}m</div>
                 <div style="display: flex; gap: 5px; margin-top: 5px;">
-                    <button class="btn-small edit-session-btn" data-session-id="${session.id}">✏️ Editar</button>
                     <button class="btn-small btn-danger delete-session-btn" data-session-id="${session.id}">🗑️ Eliminar</button>
+                    <button class="btn-small edit-session-btn" data-session-id="${session.id}">✏️ Editar</button>
                 </div>
             </div>`;
         container.appendChild(sessionItem);

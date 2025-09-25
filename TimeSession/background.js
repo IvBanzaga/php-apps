@@ -268,8 +268,8 @@ function endSession() {
         let finalDuration = currentSession.initialDuration || 0;
         if (!currentSession.isPaused && currentSession.startTime) finalDuration += (Date.now() - currentSession.startTime);
         const finalSession = { ...currentSession, endTime: Date.now(), duration: finalDuration };
-        // Remove runtime-only fields
-        delete finalSession.isPaused; delete finalSession.initialDuration; delete finalSession.pauseTime; delete finalSession.startTime;
+    // Remove runtime-only fields, pero conservar startTime para historial
+    delete finalSession.isPaused; delete finalSession.initialDuration; delete finalSession.pauseTime;
         sessions.push(finalSession);
         console.log('TimeSession Background: Array de sesiones antes de guardar:', JSON.stringify(sessions));
         chrome.storage.local.set({ sessions, currentSession: null }, () => {

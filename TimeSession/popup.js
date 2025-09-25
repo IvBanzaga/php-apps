@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let breakInfo = null;
     let timerInterval;
 
+    // Actualizar vista según estado
     function updateView() {
         if (breakInfo) {
             noActivityEl.style.display = 'none';
@@ -47,6 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Temporizador para sesión activa
     function startSessionTimer() {
         if (timerInterval) clearInterval(timerInterval);
         timerInterval = setInterval(() => {
@@ -60,6 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 1000);
     }
 
+    // Temporizador para descanso
     function startBreakTimer() {
         if (timerInterval) clearInterval(timerInterval);
         timerInterval = setInterval(() => {
@@ -74,6 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 1000);
     }
 
+    // Formatear duración en mm:ss
     function formatDuration(totalSeconds) {
         const minutes = Math.floor(totalSeconds / 60);
         const seconds = totalSeconds % 60;

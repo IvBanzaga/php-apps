@@ -50,6 +50,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     // Mapeo de acciones
     const map = {
         deleteClient,
+        editClient,
         startSession: function(request, sendResponse) {
             startSession(request, sendResponse);
             return true;
@@ -60,6 +61,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         startBreak,
         endBreak,
         deleteSession,
+        editSession,
         resetData,
         continueSession: () => resetValidationAlarm(),
         showInitialModal: () => showModalInActiveTab('showInitialModal'),
@@ -67,6 +69,45 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         checkState: () => checkState(sendResponse),
         openDashboard: () => openDashboard()
     };
+
+// Editar sesión
+function editSession({ sessionId, description, client, notes }, sendResponse) {
+    chrome.storage.local.get(['sessions'], data => {
+        const sessions = data.sessions || [];
+        const idx = sessions.findIndex(s => s.id === sessionId);
+        if (idx === -1) {
+            if (sendResponse) sendResponse({ success: false, error: 'Sesión no encontrada' });
+            return;
+        }
+        sessions[idx] = { 
+            ...sessions[idx], 
+            description, 
+            client, 
+            notes 
+        };
+        chrome.storage.local.set({ sessions }, () => {
+            if (sendResponse) sendResponse({ success: true, sessions });
+        });
+    });
+    return true; // 👈 importante
+}
+
+// Editar cliente
+function editClient({ clientId, name }, sendResponse) {
+    chrome.storage.local.get(['clients'], data => {
+        const clients = data.clients || [];
+        const idx = clients.findIndex(c => c.id === clientId);
+        if (idx === -1) {
+            if (sendResponse) sendResponse({ success: false, error: 'Cliente no encontrado' });
+            return;
+        }
+        clients[idx] = { ...clients[idx], name };
+        chrome.storage.local.set({ clients }, () => {
+            if (sendResponse) sendResponse({ success: true, clients });
+        });
+    });
+    return true; // 👈 importante
+}
 // Abrir dashboard.html en una nueva pestaña
 function openDashboard() {
     chrome.tabs.create({ url: chrome.runtime.getURL('dashboard.html') });
@@ -176,14 +217,18 @@ function normalizeStorage() {
 }
 
 function deleteClient({ clientId }, sendResponse) {
+    console.log('TimeSession Background: deleteClient recibido', clientId);
     chrome.storage.local.get('clients', ({ clients = [] }) => {
         const updated = (clients || []).filter(c => c && c.id !== clientId);
+        console.log('TimeSession Background: Clientes antes de eliminar:', clients);
+        console.log('TimeSession Background: Clientes después de eliminar:', updated);
         chrome.storage.local.set({ clients: updated }, () => {
             console.log('TimeSession Background: Cliente eliminado');
             backupStorage();
             if (sendResponse) sendResponse({ success: true, clients: updated });
         });
     });
+    return true; // 👈 importante
 }
 
 // ------------------ Data reset ------------------
@@ -200,25 +245,34 @@ function resetData(request, sendResponse) {
 // ------------------ Session lifecycle ------------------
 function startSession({ session }, sendResponse) {
     console.log('TimeSession Background: startSession llamado con:', session);
+
     try {
-        endBreak(); // Terminar descanso si existe
+        // Terminar descanso activo si existe
+        endBreak();
+
+        const timestamp = Date.now();
         const newSession = { 
-            ...session, 
-            id: `sess_${Date.now()}`, 
-            isPaused: false, 
-            initialDuration: 0, 
-            pauseTime: null, 
-            startTime: Date.now() 
+            ...session,
+            id: `sess_${timestamp}`,
+            isPaused: false,
+            initialDuration: 0,
+            pauseTime: null,
+            startTime: timestamp
         };
-        
+
+        // Guardar sesión activa
         chrome.storage.local.set({ currentSession: newSession }, () => {
             if (chrome.runtime.lastError) {
                 console.error('TimeSession Background: Error guardando currentSession:', chrome.runtime.lastError);
                 if (sendResponse) sendResponse({ success: false, error: chrome.runtime.lastError.message });
                 return;
             }
+
+            // Configurar alarma de validación
             resetValidationAlarm();
+            // Actualizar icono en la barra de extensión
             updateIcon();
+
             console.log('TimeSession Background: Sesión iniciada correctamente:', newSession);
             if (sendResponse) sendResponse({ success: true, currentSession: newSession });
         });
@@ -227,6 +281,7 @@ function startSession({ session }, sendResponse) {
         if (sendResponse) sendResponse({ success: false, error: String(err) });
     }
 }
+
 
 function pauseSession() {
     console.log('TimeSession Background: pauseSession');

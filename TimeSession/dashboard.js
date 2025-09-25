@@ -1,5 +1,9 @@
 // dashboard.js - JavaScript optimizado para el dashboard
+
 console.log('Dashboard cargado');
+
+// Variable global para sesiones
+let sessions = [];
 
 document.addEventListener('DOMContentLoaded', () => {
     if (typeof debugStorage === 'function') debugStorage();
@@ -44,9 +48,10 @@ function addModalListeners() {
 }
 
 
+
 function loadDashboardData() {
     chrome.storage.local.get(['sessions', 'clients'], (data) => {
-        const sessions = data.sessions || [];
+        sessions = data.sessions || [];
         const clients = data.clients || [];
 
         console.log('Datos cargados:', { sessions: sessions.length, clients: clients.length });
@@ -92,7 +97,11 @@ function renderSessionsList(sessions) {
                                    .slice(0, 20);
 
     recentSessions.forEach(session => {
-        const duration = Math.round((session.endTime - session.startTime) / (1000 * 60));
+        let duration = 0;
+        if (typeof session.startTime === 'number' && typeof session.endTime === 'number') {
+            duration = Math.round((session.endTime - session.startTime) / (1000 * 60));
+            if (isNaN(duration) || duration < 0) duration = 0;
+        }
         const startDate = new Date(session.startTime);
         const endDate = new Date(session.endTime);
 
@@ -161,9 +170,12 @@ function exportToCSV() {
 // Editar y eliminar sesión
 function deleteSession(sessionId) {
     if (!confirm('¿Estás seguro de que quieres eliminar esta sesión?')) return;
-    chrome.storage.local.get(['sessions'], data => {
-        const updated = (data.sessions || []).filter(s => s.id !== sessionId);
-        chrome.storage.local.set({ sessions: updated }, () => loadDashboardData());
+    chrome.runtime.sendMessage({ action: 'deleteSession', sessionId }, response => {
+        if (response?.success) {
+            loadDashboardData();
+        } else {
+            alert('Error al eliminar la sesión');
+        }
     });
 }
 
@@ -173,18 +185,26 @@ function editSession(sessionId) {
         const session = sessions.find(s => s.id === sessionId);
         if (!session) return alert('Sesión no encontrada');
 
-        const newDescription = prompt('Descripción de la tarea:', session.description || '');
+        const newDescription = prompt('Tarea:', session.description || '');
         if (newDescription === null) return;
         const newClient = prompt('Cliente:', session.client || '');
         if (newClient === null) return;
-        const newNotes = prompt('Notas:', session.notes || '');
+        const newNotes = prompt('Descripción:', session.notes || '');
         if (newNotes === null) return;
 
-        session.description = newDescription;
-        session.client = newClient;
-        session.notes = newNotes;
-
-        chrome.storage.local.set({ sessions: sessions }, () => loadDashboardData());
+        chrome.runtime.sendMessage({
+            action: 'editSession',
+            sessionId,
+            description: newDescription,
+            client: newClient,
+            notes: newNotes
+        }, response => {
+            if (response?.success) {
+                loadDashboardData();
+            } else {
+                alert('Error al editar la sesión');
+            }
+        });
     });
 }
 
@@ -246,7 +266,6 @@ function addClient() {
 
 function editClient(clientId) {
     if (!clientId) return alert('ID de cliente inválido');
-
     chrome.storage.local.get(['clients'], data => {
         const clients = data.clients || [];
         const client = clients.find(c => c.id === clientId);
@@ -255,8 +274,17 @@ function editClient(clientId) {
         const newName = prompt('Editar nombre del cliente:', client.name);
         if (newName === null) return; // Cancelado
 
-        client.name = newName.trim();
-        chrome.storage.local.set({ clients }, () => loadDashboardData());
+        chrome.runtime.sendMessage({
+            action: 'editClient',
+            clientId,
+            name: newName.trim()
+        }, response => {
+            if (response?.success) {
+                loadDashboardData();
+            } else {
+                alert('Error al editar el cliente');
+            }
+        });
     });
 }
 
@@ -265,10 +293,12 @@ function editClient(clientId) {
 
 function deleteClient(clientId) {
     if (!confirm('¿Estás seguro de que quieres eliminar este cliente?')) return;
-
-    chrome.storage.local.get(['clients'], data => {
-        const clients = (data.clients || []).filter(c => c.id !== clientId);
-        chrome.storage.local.set({ clients }, () => loadDashboardData());
+    chrome.runtime.sendMessage({ action: 'deleteClient', clientId }, response => {
+        if (response?.success) {
+            loadDashboardData();
+        } else {
+            alert('Error al eliminar el cliente');
+        }
     });
 }
 
@@ -386,15 +416,19 @@ function generateColors(n) {
   return colors;
 }
 
-// Inicializar select y evento
-const chartRange = document.getElementById('chartRange');
-chartRange.addEventListener('change', () => {
-  const filtered = filterSessionsByRange(sessions, chartRange.value);
-  createTimeChart(filtered);
-});
 
-// Llamar inicialmente
-createTimeChart(sessions);
+// Inicializar select y evento después de cargar el DOM
+document.addEventListener('DOMContentLoaded', () => {
+    const chartRange = document.getElementById('chartRange');
+    if (chartRange) {
+        chartRange.addEventListener('change', () => {
+            const filtered = filterSessionsByRange(sessions, chartRange.value);
+            createTimeChart(filtered);
+        });
+    }
+    // Llamar inicialmente el gráfico solo si hay sesiones cargadas
+    createTimeChart(sessions);
+});
 
 
 

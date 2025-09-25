@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TimeSession</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            width: 250px;
+            margin: 0;
+            padding: 10px;
+        }
+
+        #compactView {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .time-display {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        button {
+            padding: 5px 10px;
+            margin-top: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="compactView">
+        <!-- Estado de sesión -->
+        <div id="compactSession"
+            style="display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:80px;">
+            <div id="compactType">–</div>
+            <div id="compactDescription">–</div>
+            <div class="time-display">
+                <span id="compactDuration">0m 00s</span>
+            </div>
+            <!-- Botones de control de sesión -->
+            <div id="sessionControls" style="display:none; gap:4px; margin-top:8px;">
+                <button id="pauseSessionBtn">⏸️ Pausar</button>
+                <button id="resumeSessionBtn">▶️ Reanudar</button>
+                <button id="endSessionBtn">⏹️ Finalizar</button>
+            </div>
+        </div>
+
+        <!-- No hay actividad -->
+        <div id="noActivity" style="display:none;">
+            <div>No hay actividad activa</div>
+            <button id="startQuickSessionBtn">🚀 Iniciar Sesión</button>
+        </div>
+
+        <!-- Dashboard -->
+        <button id="viewDashboardBtn">📊 Dashboard</button>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+
+</html>

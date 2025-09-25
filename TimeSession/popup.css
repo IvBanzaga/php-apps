@@ -1,0 +1,522 @@
+/* popup.css - Estilos para el dashboard TimeSession */
+:root {
+    --primary-start: #667eea;
+    --primary-end: #764ba2;
+    --background-light: #f8f9ff;
+    --text-dark: #333;
+    --text-light: #666;
+    --border-color: #ddd;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --break-color: #ffa726;
+    --break-bg: #fff8e7;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    /* Evitar dimensiones fijas para que el popup pueda ajustarse al contenedor del navegador.
+       Usamos un ancho máximo y altura automática para evitar que el popup no se muestre
+       por exceder límites del navegador o quedar fuera de la pantalla. */
+    max-width: 380px; /* Ancho recomendado */
+    min-width: 280px;
+    height: auto;
+    max-height: 600px;
+    background: #f4f7f6;
+    color: var(--text-dark);
+}
+
+.container {
+    width: 100%;
+    /* Altura flexible para que el popup redimensione correctamente según contenido */
+    height: auto;
+    max-height: 600px;
+    overflow-y: auto;
+    background: #fff;
+}
+
+/* Scrollbar Styles */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #999;
+}
+
+
+/* Vista de Carga */
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-left-color: var(--primary-start);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* --- VISTA COMPACTA --- */
+.compact-view {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.compact-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-shrink: 0;
+}
+
+.compact-header h2 {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.dashboard-link {
+    background: none;
+    border: 1px solid var(--primary-start);
+    color: var(--primary-start);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.dashboard-link:hover {
+    background: var(--primary-start);
+    color: white;
+}
+
+.compact-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+/* Actividad Compacta (Sesión o Descanso) */
+.compact-activity {
+    width: 100%;
+    padding: 20px;
+    background: var(--background-light);
+    border-radius: 12px;
+    border-left: 4px solid var(--primary-start);
+}
+
+.compact-break .compact-activity {
+    border-left-color: var(--break-color);
+    background: var(--break-bg);
+}
+
+.activity-type {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 4px;
+}
+
+.activity-description {
+    font-size: 12px;
+    color: var(--text-light);
+    margin-bottom: 16px;
+    min-height: 16px;
+}
+
+.time-display {
+    margin-bottom: 20px;
+}
+
+.current-time {
+    font-size: 48px;
+    font-weight: 700;
+    color: var(--text-dark);
+    line-height: 1;
+}
+
+.time-label {
+    font-size: 12px;
+    color: var(--text-light);
+}
+
+.paused-status {
+    font-size: 12px;
+    font-weight: bold;
+    color: var(--warning-color);
+    margin-top: 12px;
+}
+
+/* Sin Actividad */
+.no-activity {
+    text-align: center;
+}
+
+.no-activity-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+.no-activity-text {
+    font-size: 16px;
+    color: var(--text-light);
+    margin-bottom: 24px;
+}
+
+.quick-start-btn {
+    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.quick-start-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+
+/* --- VISTA DASHBOARD --- */
+.dashboard-view {
+    padding-bottom: 20px;
+}
+
+.header {
+    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.header h1 {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.back-btn, .btn-icon {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.back-btn:hover, .btn-icon:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Tarjetas de Sesión y Descanso */
+.session-card {
+    margin: 16px;
+    background: var(--background-light);
+    border-radius: 12px;
+    padding: 16px;
+    border-left: 4px solid var(--primary-start);
+}
+
+.break-card {
+    border-left-color: var(--break-color);
+    background: var(--break-bg);
+}
+
+.session-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.session-header h3 {
+    color: var(--text-dark);
+    font-size: 16px;
+}
+
+.session-controls {
+    display: flex;
+    gap: 6px;
+}
+
+.session-info p {
+    margin: 6px 0;
+    font-size: 14px;
+    color: var(--text-light);
+}
+
+.paused-indicator {
+    background: var(--warning-color);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+    margin-top: 8px;
+    display: inline-block;
+}
+
+/* Botones */
+.btn-primary, .btn-secondary, .control-btn {
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+    color: white;
+}
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.btn-secondary {
+    background: #e9ecef;
+    color: var(--text-dark);
+}
+.btn-secondary:hover {
+    background: #dee2e6;
+}
+
+.control-btn {
+    background: #e9ecef;
+    color: var(--text-dark);
+    flex: 1;
+}
+.control-btn:hover {
+    background: #dee2e6;
+}
+
+.end-btn {
+    background: var(--danger-color);
+    color: white;
+}
+.end-btn:hover {
+    background: #c82333;
+}
+
+.btn-small {
+    background: #f8f9fa;
+    color: var(--text-dark);
+    border: 1px solid var(--border-color);
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s;
+}
+.btn-small:hover {
+    background: #e9ecef;
+    border-color: #bbb;
+}
+
+.btn-danger {
+    background: var(--danger-color);
+    color: white;
+    border-color: var(--danger-color);
+}
+.btn-danger:hover {
+    background: #c82333;
+    border-color: #c82333;
+}
+
+/* Acciones Rápidas */
+.quick-actions {
+    margin: 0 16px 16px;
+    display: flex;
+    gap: 10px;
+}
+.quick-actions .btn-primary, .quick-actions .btn-secondary {
+    flex: 1;
+}
+
+/* Contenedor de Gráfico */
+.chart-container {
+    margin: 16px;
+    padding: 16px;
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.chart-header h3 {
+    color: var(--text-dark);
+    font-size: 16px;
+}
+
+.period-selector {
+    background: white;
+    border: 1px solid var(--border-color);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+#timeChart {
+    max-height: 200px;
+}
+
+/* Sección de Exportar */
+.export-section {
+    margin: 0 16px 16px;
+}
+.export-section .btn-secondary {
+    width: 100%;
+}
+
+/* Contenedor de Sesiones */
+.sessions-container {
+    margin: 16px;
+}
+
+.sessions-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.sessions-header h3 {
+    color: var(--text-dark);
+    font-size: 16px;
+}
+
+.sessions-stats {
+    font-size: 12px;
+    color: var(--text-light);
+}
+
+.sessions-list {
+    max-height: 400px; /* Más altura para ver más items */
+    overflow-y: auto;
+    padding-right: 5px; /* Espacio para scrollbar */
+}
+
+.session-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--background-light);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 8px;
+    border-left: 3px solid var(--primary-start);
+    animation: slideIn 0.3s ease-out;
+}
+
+.session-info .session-type {
+    font-size: 10px;
+    font-weight: bold;
+    color: var(--text-light);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.session-info .session-description {
+    font-size: 14px;
+    color: var(--text-dark);
+    margin-bottom: 6px;
+    font-weight: 500;
+}
+
+.session-info .session-meta {
+    font-size: 12px;
+    color: var(--text-light);
+}
+
+.session-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.session-actions .btn-icon {
+    background: #e9ecef;
+    color: var(--text-dark);
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+}
+.session-actions .btn-icon:hover {
+    background: #dee2e6;
+}
+
+/* Animación */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    body {
+        width: 100vw;
+        height: 100vh;
+    }
+    
+    .quick-actions {
+        flex-direction: column;
+    }
+    
+    .modal-content {
+        width: 95%;
+        margin: 10px;
+    }
+}

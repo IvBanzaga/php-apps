@@ -1,0 +1,354 @@
+// dashboard.js - JavaScript optimizado para el dashboard
+console.log('Dashboard cargado');
+
+document.addEventListener('DOMContentLoaded', () => {
+    if (typeof debugStorage === 'function') debugStorage();
+    
+    loadDashboardData();
+
+    document.getElementById('exportBtn').addEventListener('click', exportToCSV);
+    document.getElementById('cleanDataBtn').addEventListener('click', cleanCorruptedData);
+    document.getElementById('resetAllBtn').addEventListener('click', resetAllData);
+    document.getElementById('addClientBtn').addEventListener('click', addClient);
+
+    // Abrir página de opciones/configuración
+    const optionsBtn = document.getElementById('openOptionsBtn');
+    if (optionsBtn) {
+        optionsBtn.addEventListener('click', () => {
+            if (chrome.runtime.openOptionsPage) {
+                chrome.runtime.openOptionsPage();
+            } else {
+                window.open(chrome.runtime.getURL('options.html'));
+            }
+        });
+    }
+});
+
+function addModalListeners() {
+    modal.querySelectorAll('.option-btn').forEach(btn => {
+        btn.onclick = () => handleActivitySelection(btn.dataset.type);
+    });
+
+    // Aquí se conecta el botón “Agregar” con la función addNewClient
+    modal.querySelector('#addClientBtn').onclick = addNewClient;
+
+    modal.querySelector('#startBtn').onclick = startSession;
+    modal.querySelector('#cancelBtn').onclick = resetModalView;
+    modal.querySelector('#startBreakBtn').onclick = startBreak;
+    modal.querySelector('#cancelBreakBtn').onclick = resetModalView;
+}
+
+
+function loadDashboardData() {
+    chrome.storage.local.get(['sessions', 'clients'], (data) => {
+        const sessions = data.sessions || [];
+        const clients = data.clients || [];
+
+        console.log('Datos cargados:', { sessions: sessions.length, clients: clients.length });
+
+        updateStats(sessions, clients);
+        renderClientsList(clients);
+        updateClientSelect(clients);
+        renderSessionsList(sessions);
+    });
+}
+
+function updateStats(sessions, clients) {
+    const completedSessions = sessions.filter(s => s.endTime && s.startTime);
+    const totalTimeMs = completedSessions.reduce((sum, s) => sum + (s.endTime - s.startTime), 0);
+    let totalTimeHours = 0;
+    let avgSessionMins = 0;
+    if (completedSessions.length > 0 && totalTimeMs > 0) {
+        totalTimeHours = Math.round(totalTimeMs / (1000 * 60 * 60) * 10) / 10;
+        avgSessionMins = Math.round(totalTimeMs / (completedSessions.length * 1000 * 60));
+    }
+    document.getElementById('totalSessions').textContent = completedSessions.length;
+    document.getElementById('totalTime').textContent = (isNaN(totalTimeHours) ? 0 : totalTimeHours) + 'h';
+    document.getElementById('totalClients').textContent = clients.length;
+    document.getElementById('avgSession').textContent = (isNaN(avgSessionMins) ? 0 : avgSessionMins) + 'm';
+}
+
+function renderSessionsList(sessions) {
+    const container = document.getElementById('sessionsList');
+    console.log('Dashboard: Sesiones recibidas para renderizar:', sessions);
+    if (!sessions || sessions.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <h3>🕐 No hay sesiones registradas</h3>
+                <p>Inicia tu primera sesión para ver el historial aquí</p>
+            </div>`;
+        return;
+    }
+
+    container.innerHTML = '';
+    const recentSessions = sessions.filter(s => s.endTime)
+                                   .sort((a, b) => b.startTime - a.startTime)
+                                   .slice(0, 20);
+
+    recentSessions.forEach(session => {
+        const duration = Math.round((session.endTime - session.startTime) / (1000 * 60));
+        const startDate = new Date(session.startTime);
+        const endDate = new Date(session.endTime);
+
+        const sessionItem = document.createElement('div');
+        sessionItem.className = 'session-item';
+        sessionItem.innerHTML = `
+            <div class="session-info">
+                <div class="session-title">${getTypeIcon(session.type)} ${session.description || 'Sin descripción'}</div>
+                <div class="session-meta">
+                    ${startDate.toLocaleDateString('es-ES')} • 
+                    ${startDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} - 
+                    ${endDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                    ${session.client ? ` • Cliente: ${session.client}` : ''}
+                </div>
+            </div>
+            <div class="session-actions">
+                <div class="session-duration">${duration}m</div>
+                <div style="display: flex; gap: 5px; margin-top: 5px;">
+                    <button class="btn-small edit-session-btn" data-session-id="${session.id}">✏️ Editar</button>
+                    <button class="btn-small btn-danger delete-session-btn" data-session-id="${session.id}">🗑️ Eliminar</button>
+                </div>
+            </div>`;
+        container.appendChild(sessionItem);
+    });
+
+    createTimeChart(sessions.filter(s => s.endTime));
+}
+
+function getTypeIcon(type) {
+    const icons = { personal: '👤', client: '💼', learning: '📚', programming: '💻' };
+    return icons[type] || '📝';
+}
+
+function getTypeLabel(type) {
+    const labels = { personal: 'Para mí', client: 'Cliente', learning: 'Aprendizaje', programming: 'Programando' };
+    return labels[type] || type;
+}
+
+function exportToCSV() {
+    chrome.storage.local.get(['sessions'], (data) => {
+        const sessions = data.sessions || [];
+        if (sessions.length === 0) return alert('No hay sesiones para exportar');
+
+        const headers = ['ID', 'Fecha', 'Inicio', 'Fin', 'Tipo', 'Descripción', 'Cliente', 'Duración (minutos)'];
+        const rows = sessions.filter(s => s.endTime).map(s => {
+            const duration = Math.round((s.endTime - s.startTime) / (1000 * 60));
+            const startDate = new Date(s.startTime);
+            const endDate = new Date(s.endTime);
+            return [s.id, startDate.toLocaleDateString('es-ES'), startDate.toLocaleTimeString('es-ES'),
+                    endDate.toLocaleTimeString('es-ES'), getTypeLabel(s.type), s.description || '', s.client || '', duration];
+        });
+
+        const csvContent = [headers, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `time_session_export_${new Date().toISOString().split('T')[0]}.csv`;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        console.log('CSV exportado exitosamente');
+    });
+}
+
+// Editar y eliminar sesión
+function deleteSession(sessionId) {
+    if (!confirm('¿Estás seguro de que quieres eliminar esta sesión?')) return;
+    chrome.storage.local.get(['sessions'], data => {
+        const updated = (data.sessions || []).filter(s => s.id !== sessionId);
+        chrome.storage.local.set({ sessions: updated }, () => loadDashboardData());
+    });
+}
+
+function editSession(sessionId) {
+    chrome.storage.local.get(['sessions'], data => {
+        const sessions = data.sessions || [];
+        const session = sessions.find(s => s.id === sessionId);
+        if (!session) return alert('Sesión no encontrada');
+
+        const newDescription = prompt('Descripción de la tarea:', session.description || '');
+        if (newDescription === null) return;
+        const newClient = prompt('Cliente:', session.client || '');
+        if (newClient === null) return;
+        const newNotes = prompt('Notas:', session.notes || '');
+        if (newNotes === null) return;
+
+        session.description = newDescription;
+        session.client = newClient;
+        session.notes = newNotes;
+
+        chrome.storage.local.set({ sessions: sessions }, () => loadDashboardData());
+    });
+}
+
+// Clientes
+function renderClientsList(clients) {
+    const container = document.getElementById('clientsList');
+    if (!clients || clients.length === 0) {
+        container.innerHTML = `<div class="empty-state"><p>👥 No hay clientes registrados</p></div>`;
+        return;
+    }
+
+    container.innerHTML = '';
+    clients.forEach(client => {
+        const clientItem = document.createElement('div');
+        clientItem.className = 'client-item';
+        clientItem.innerHTML = `
+            <div class="client-name">👤 ${client.name}</div>
+            <div class="client-actions">
+                <button class="btn-small btn-danger delete-client-btn" data-client-id="${client.id}">🗑️ Eliminar</button>
+                <button class="btn-small btn-primary edit-client-btn" data-client-id="${client.id}">✏️ Editar</button>
+            </div>`;
+        container.appendChild(clientItem);
+    });
+}
+
+
+function updateClientSelect(clients) {
+    const select = document.getElementById('selectClient');
+    if (!select) return;
+
+    select.innerHTML = '<option value="">Seleccionar cliente</option>';
+    clients.forEach(client => {
+        const opt = document.createElement('option');
+        opt.value = client.name;
+        opt.textContent = client.name;
+        select.appendChild(opt);
+    });
+}
+
+function addClient() {
+    const input = document.getElementById('newClientName');
+    if (!input) return alert('Error: No se encontró el campo de texto para el cliente');
+
+    const clientName = input.value.trim();
+    if (!clientName) return alert('Por favor ingresa un nombre para el cliente');
+
+    const clientId = `client_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
+
+    chrome.storage.local.get(['clients'], data => {
+        const clients = data.clients || [];
+        clients.push({ id: clientId, name: clientName });
+        chrome.storage.local.set({ clients }, () => {
+            input.value = '';
+            loadDashboardData(); // recarga la lista de clientes
+            alert('Cliente agregado: ' + clientName);
+        });
+    });
+}
+
+function editClient(clientId) {
+    if (!clientId) return alert('ID de cliente inválido');
+
+    chrome.storage.local.get(['clients'], data => {
+        const clients = data.clients || [];
+        const client = clients.find(c => c.id === clientId);
+        if (!client) return alert('Cliente no encontrado');
+
+        const newName = prompt('Editar nombre del cliente:', client.name);
+        if (newName === null) return; // Cancelado
+
+        client.name = newName.trim();
+        chrome.storage.local.set({ clients }, () => loadDashboardData());
+    });
+}
+
+
+
+
+function deleteClient(clientId) {
+    if (!confirm('¿Estás seguro de que quieres eliminar este cliente?')) return;
+
+    chrome.storage.local.get(['clients'], data => {
+        const clients = (data.clients || []).filter(c => c.id !== clientId);
+        chrome.storage.local.set({ clients }, () => loadDashboardData());
+    });
+}
+
+
+// Gráfico
+let timeChart = null;
+function createTimeChart(sessions) {
+    if (typeof Chart === 'undefined') return console.error('Chart.js no está disponible');
+    const canvas = document.getElementById('timeChart');
+    if (!canvas) return console.error('Canvas para gráfico no encontrado');
+    const ctx = canvas.getContext('2d');
+    if (timeChart) timeChart.destroy();
+
+    if (!sessions || sessions.length === 0) {
+        ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
+        ctx.font = '16px Arial';
+        ctx.fillStyle = '#666';
+        ctx.textAlign = 'center';
+        ctx.fillText('No hay datos para mostrar', ctx.canvas.width / 2, ctx.canvas.height / 2);
+        return;
+    }
+
+    const timeByType = {};
+    sessions.forEach(s => {
+        const duration = (new Date(s.endTime) - new Date(s.startTime)) / (1000 * 60);
+        const type = s.type || 'otros';
+        timeByType[type] = (timeByType[type] || 0) + duration;
+    });
+
+    const labels = Object.keys(timeByType).map(getTypeLabel);
+    const data = Object.values(timeByType);
+    const colors = ['#FF6384','#36A2EB','#FFCE56','#4BC0C0','#9966FF','#FF9F40','#FF6384','#C9CBCF'];
+
+    timeChart = new Chart(ctx, {
+        type:'doughnut',
+        data: { labels, datasets:[{ data, backgroundColor: colors.slice(0, labels.length), borderWidth:2, borderColor:'#fff' }] },
+        options: {
+            responsive:true,
+            maintainAspectRatio:false,
+            plugins:{
+                legend:{ position:'bottom', labels:{ padding:20, usePointStyle:true } },
+                tooltip:{ callbacks:{ label: context => {
+                    const minutes = context.parsed;
+                    const hours = Math.floor(minutes / 60);
+                    const mins = Math.round(minutes % 60);
+                    const totalMinutes = data.reduce((a,b)=>a+b,0);
+                    const percentage = ((minutes/totalMinutes)*100).toFixed(1);
+                    return `${context.label}: ${hours}h ${mins}m (${percentage}%)`;
+                }}}
+            }
+        }
+    });
+}
+
+// Limpiar datos corruptos
+function cleanCorruptedData() {
+    if (!confirm('¿Estás seguro de limpiar datos corruptos? Esta acción no se puede deshacer.')) return;
+    chrome.storage.local.get(['clients','sessions'], data => {
+        const cleanClients = (data.clients||[]).filter(c => c?.id && c?.name);
+        const cleanSessions = (data.sessions||[]).filter(s => s?.id && s?.startTime);
+
+        chrome.storage.local.set({ clients: cleanClients, sessions: cleanSessions }, () => {
+            alert(`Limpieza completada:\n- ${data.clients.length-cleanClients.length} clientes corruptos eliminados\n- ${data.sessions.length-cleanSessions.length} sesiones corruptas eliminadas`);
+            loadDashboardData();
+        });
+    });
+}
+
+// Event listeners dinámicos
+document.addEventListener('click', e => {
+    if (e.target.classList.contains('edit-session-btn')) editSession(e.target.dataset.sessionId);
+    if (e.target.classList.contains('delete-session-btn')) deleteSession(e.target.dataset.sessionId);
+    if (e.target.classList.contains('edit-client-btn')) editClient(e.target.dataset.clientId); // ✅ AGREGADO
+    if (e.target.classList.contains('delete-client-btn')) deleteClient(e.target.dataset.clientId);
+});
+
+
+// Reiniciar todos los datos
+function resetAllData() {
+    if (!confirm('⚠️ Esto eliminará TODOS los datos. ¿Continuar?')) return;
+    if (!confirm('🚨 ÚLTIMA CONFIRMACIÓN: Se perderán TODOS los datos permanentemente. ¿Continuar?')) return;
+
+    chrome.runtime.sendMessage({ action: 'resetData' }, response => {
+        if (response?.success) {
+            alert('✅ Todos los datos han sido eliminados.');
+            window.location.reload();
+        } else alert('❌ Error al reiniciar los datos');
+    });
+}

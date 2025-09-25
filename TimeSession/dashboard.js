@@ -59,13 +59,14 @@ function loadDashboardData() {
 }
 
 function updateStats(sessions, clients) {
-    const completedSessions = sessions.filter(s => s.endTime && s.startTime);
-    const totalTimeMs = completedSessions.reduce((sum, s) => sum + (s.endTime - s.startTime), 0);
+    // Filtrar sesiones finalizadas (tienen endTime y duration)
+    const completedSessions = sessions.filter(s => s.endTime && typeof s.duration === 'number');
+    const totalTimeMins = completedSessions.reduce((sum, s) => sum + Math.round(s.duration / (1000 * 60)), 0);
     let totalTimeHours = 0;
     let avgSessionMins = 0;
-    if (completedSessions.length > 0 && totalTimeMs > 0) {
-        totalTimeHours = Math.round(totalTimeMs / (1000 * 60 * 60) * 10) / 10;
-        avgSessionMins = Math.round(totalTimeMs / (completedSessions.length * 1000 * 60));
+    if (completedSessions.length > 0 && totalTimeMins > 0) {
+        totalTimeHours = Math.round(totalTimeMins / 60 * 10) / 10;
+        avgSessionMins = Math.round(totalTimeMins / completedSessions.length);
     }
     document.getElementById('totalSessions').textContent = completedSessions.length;
     document.getElementById('totalTime').textContent = (isNaN(totalTimeHours) ? 0 : totalTimeHours) + 'h';
@@ -274,53 +275,128 @@ function deleteClient(clientId) {
 
 // Gráfico
 let timeChart = null;
+
+// Función principal para crear el gráfico
 function createTimeChart(sessions) {
-    if (typeof Chart === 'undefined') return console.error('Chart.js no está disponible');
-    const canvas = document.getElementById('timeChart');
-    if (!canvas) return console.error('Canvas para gráfico no encontrado');
-    const ctx = canvas.getContext('2d');
-    if (timeChart) timeChart.destroy();
+  if (typeof Chart === 'undefined') return console.error('Chart.js no está disponible');
 
-    if (!sessions || sessions.length === 0) {
-        ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
-        ctx.font = '16px Arial';
-        ctx.fillStyle = '#666';
-        ctx.textAlign = 'center';
-        ctx.fillText('No hay datos para mostrar', ctx.canvas.width / 2, ctx.canvas.height / 2);
-        return;
-    }
+  const canvas = document.getElementById('timeChart');
+  if (!canvas) return console.error('Canvas para gráfico no encontrado');
+  const ctx = canvas.getContext('2d');
 
-    const timeByType = {};
-    sessions.forEach(s => {
-        const duration = (new Date(s.endTime) - new Date(s.startTime)) / (1000 * 60);
-        const type = s.type || 'otros';
-        timeByType[type] = (timeByType[type] || 0) + duration;
-    });
+  if (timeChart) timeChart.destroy();
 
-    const labels = Object.keys(timeByType).map(getTypeLabel);
-    const data = Object.values(timeByType);
-    const colors = ['#FF6384','#36A2EB','#FFCE56','#4BC0C0','#9966FF','#FF9F40','#FF6384','#C9CBCF'];
+  if (!sessions || sessions.length === 0) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.font = '16px Arial';
+    ctx.fillStyle = '#666';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('No hay datos para mostrar', canvas.width / 2, canvas.height / 2);
+    return;
+  }
 
-    timeChart = new Chart(ctx, {
-        type:'doughnut',
-        data: { labels, datasets:[{ data, backgroundColor: colors.slice(0, labels.length), borderWidth:2, borderColor:'#fff' }] },
-        options: {
-            responsive:true,
-            maintainAspectRatio:false,
-            plugins:{
-                legend:{ position:'bottom', labels:{ padding:20, usePointStyle:true } },
-                tooltip:{ callbacks:{ label: context => {
-                    const minutes = context.parsed;
-                    const hours = Math.floor(minutes / 60);
-                    const mins = Math.round(minutes % 60);
-                    const totalMinutes = data.reduce((a,b)=>a+b,0);
-                    const percentage = ((minutes/totalMinutes)*100).toFixed(1);
-                    return `${context.label}: ${hours}h ${mins}m (${percentage}%)`;
-                }}}
+  // Agrupar tiempos por tipo
+  const timeByType = {};
+  sessions.forEach(s => {
+    const type = s.type || 'Otros';
+    let duration = 0;
+    if (typeof s.duration === 'number') duration = s.duration / 60000; // minutos
+    else if (s.startTime && s.endTime) duration = (new Date(s.endTime) - new Date(s.startTime)) / 60000;
+    if (duration > 0) timeByType[type] = (timeByType[type] || 0) + duration;
+  });
+
+  const labels = Object.keys(timeByType).map(getTypeLabel);
+  const data = Object.values(timeByType);
+  const backgroundColor = generateColors(labels.length);
+
+  // Crear gráfico de barras
+  timeChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Tiempo total (minutos)',
+        data,
+        backgroundColor,
+        borderColor: '#333',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const minutes = ctx.parsed.y;
+              return `${ctx.label}: ${formatMinutes(minutes)} (${Math.round(minutes)} min)`;
             }
+          }
         }
-    });
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: { display: true, text: 'Minutos' }
+        },
+        x: {
+          title: { display: true, text: 'Tipo de sesión' }
+        }
+      }
+    }
+  });
 }
+
+
+// Filtrar sesiones según rango seleccionado
+function filterSessionsByRange(sessions, range) {
+  const now = new Date();
+  return sessions.filter(s => {
+    const start = new Date(s.startTime);
+    if (range === 'day') return start.toDateString() === now.toDateString();
+    if (range === 'week') {
+      const weekStart = new Date(now);
+      weekStart.setDate(now.getDate() - now.getDay());
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 6);
+      return start >= weekStart && start <= weekEnd;
+    }
+    if (range === 'month') return start.getMonth() === now.getMonth() && start.getFullYear() === now.getFullYear();
+    return true;
+  });
+}
+
+// Formatear minutos a "Xh Ym"
+function formatMinutes(minutes) {
+  const h = Math.floor(minutes / 60);
+  const m = Math.round(minutes % 60);
+  return `${h}h ${m}m`;
+}
+
+// Generar colores HSL dinámicos
+function generateColors(n) {
+  const colors = [];
+  for(let i=0;i<n;i++){
+    const hue = i * (360 / n);
+    colors.push(`hsl(${hue}, 70%, 60%)`);
+  }
+  return colors;
+}
+
+// Inicializar select y evento
+const chartRange = document.getElementById('chartRange');
+chartRange.addEventListener('change', () => {
+  const filtered = filterSessionsByRange(sessions, chartRange.value);
+  createTimeChart(filtered);
+});
+
+// Llamar inicialmente
+createTimeChart(sessions);
+
+
 
 // Limpiar datos corruptos
 function cleanCorruptedData() {

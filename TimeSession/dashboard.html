@@ -232,12 +232,21 @@
       </div>
     </div>
 
-    <div class="chart-container">
-      <h2>📈 Distribución de Tiempo por Category</h2>
-      <div style="max-width: 600px; margin: 0 auto;">
-        <canvas id="timeChart"></canvas>
-      </div>
+  <div class="chart-container">
+    <h2>📈 Distribución de Tiempo</h2>
+    <div style="margin-bottom: 16px; text-align: right;">
+      <label for="chartRange" style="font-weight: 500; margin-right: 8px;">Ver por:</label>
+      <select id="chartRange" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #ddd;">
+        <option value="day">Día</option>
+        <option value="week">Semana</option>
+        <option value="month">Mes</option>
+      </select>
     </div>
+    <div style="max-width: 600px; margin: 0 auto;">
+      <canvas id="timeChart"></canvas>
+    </div>
+  </div>
+
 
     <div class="export-section">
       <button id="exportBtn" class="btn">📥 Exportar a CSV</button>

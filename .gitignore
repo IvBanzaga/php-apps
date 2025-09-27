@@ -14,3 +14,10 @@ index.html
 .env
 .env.local
 .env.*.local
+
+
+.code-workspace
+
+# Carpeta excluida
+laravel-crud/
+

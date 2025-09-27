@@ -16,7 +16,7 @@ index.html
 .env.*.local
 
 
-.code-workspace
+php.code-workspace
 
 # Carpeta excluida
 laravel-crud/

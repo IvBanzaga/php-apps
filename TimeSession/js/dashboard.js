@@ -32,35 +32,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
     loadDashboardData();
 
-        // Listeners para control de sesión
-        const pauseBtn = document.getElementById('csPauseBtn');
-        const resumeBtn = document.getElementById('csResumeBtn');
-        const endBtn = document.getElementById('csEndBtn');
+    // Listeners para control de sesión
+    const pauseBtn = document.getElementById('csPauseBtn');
+    const resumeBtn = document.getElementById('csResumeBtn');
+    const endBtn = document.getElementById('csEndBtn');
 
-        if (pauseBtn) {
-            pauseBtn.addEventListener('click', () => {
-                chrome.runtime.sendMessage({ action: 'pauseSession' }, () => {
-                    pauseBtn.style.display = 'none';
-                    resumeBtn.style.display = 'inline-block';
-                });
+    if (pauseBtn) {
+        pauseBtn.addEventListener('click', () => {
+            chrome.runtime.sendMessage({ action: 'pauseSession' }, () => {
+                pauseBtn.style.display = 'none';
+                resumeBtn.style.display = 'inline-block';
             });
-        }
-        if (resumeBtn) {
-            resumeBtn.addEventListener('click', () => {
-                chrome.runtime.sendMessage({ action: 'resumeSession' }, () => {
-                    resumeBtn.style.display = 'none';
-                    pauseBtn.style.display = 'inline-block';
-                });
+        });
+    }
+    if (resumeBtn) {
+        resumeBtn.addEventListener('click', () => {
+            chrome.runtime.sendMessage({ action: 'resumeSession' }, () => {
+                resumeBtn.style.display = 'none';
+                pauseBtn.style.display = 'inline-block';
             });
-        }
-        if (endBtn) {
-            endBtn.addEventListener('click', () => {
-                chrome.runtime.sendMessage({ action: 'endSession' }, () => {
-                    document.getElementById('currentSessionBar').style.display = 'none';
-                    loadDashboardData();
-                });
+        });
+    }
+    if (endBtn) {
+        endBtn.addEventListener('click', () => {
+            chrome.runtime.sendMessage({ action: 'endSession' }, () => {
+                document.getElementById('currentSessionBar').style.display = 'none';
+                loadDashboardData();
             });
-        }
+        });
+    }
     // Mostrar barra de sesión o descanso actual (función reutilizable)
     let sessionTimerInterval = null;
     function updateSessionBar() {
@@ -114,10 +114,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function formatDuration(totalSeconds) {
-        const minutes = Math.floor(totalSeconds / 60);
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
         const seconds = totalSeconds % 60;
-        return `${minutes}m ${seconds.toString().padStart(2,'0')}s`;
+
+        // Formatear para que siempre tenga 2 dígitos
+        const hStr = hours.toString().padStart(2, '0');
+        const mStr = minutes.toString().padStart(2, '0');
+        const sStr = seconds.toString().padStart(2, '0');
+
+        return `${hStr}:${mStr}:${sStr}`;
     }
+
     // Llamar al cargar
     updateSessionBar();
     // Escuchar cambios en el storage para breakInfo y currentSession
@@ -126,15 +134,15 @@ document.addEventListener('DOMContentLoaded', () => {
             updateSessionBar();
         }
     });
-/* TODO: Devuelve el tiempo restante del descanso activo en formato mm:ss */
-function getBreakTime(breakInfo) {
-    if (!breakInfo || !breakInfo.endTime) return '';
-    const ms = breakInfo.endTime - Date.now();
-    if (ms <= 0) return '0m 00s';
-    const min = Math.floor(ms / 60000);
-    const sec = Math.floor((ms % 60000) / 1000);
-    return `${min}m ${sec.toString().padStart(2, '0')}s`;
-}
+    /* TODO: Devuelve el tiempo restante del descanso activo en formato mm:ss */
+    function getBreakTime(breakInfo) {
+        if (!breakInfo || !breakInfo.endTime) return '';
+        const ms = breakInfo.endTime - Date.now();
+        if (ms <= 0) return '0m 00s';
+        const min = Math.floor(ms / 60000);
+        const sec = Math.floor((ms % 60000) / 1000);
+        return `${min}m ${sec.toString().padStart(2, '0')}s`;
+    }
 
     document.getElementById('exportBtn').addEventListener('click', exportToCSV);
     document.getElementById('cleanDataBtn').addEventListener('click', cleanCorruptedData);
@@ -216,8 +224,8 @@ function renderSessionsList(sessions) {
 
     container.innerHTML = '';
     const recentSessions = sessions.filter(s => s.endTime)
-                                   .sort((a, b) => b.startTime - a.startTime)
-                                   .slice(0, 20);
+        .sort((a, b) => b.startTime - a.startTime)
+        .slice(0, 20);
 
     recentSessions.forEach(session => {
         let duration = 0;
@@ -244,7 +252,7 @@ function renderSessionsList(sessions) {
                 <div class="session-description-box" style="background: #f8f9fa; border-radius: 8px; padding: 8px 16px; min-width: 120px; color: #333; font-size: 14px; text-align: center; align-self: center;">${session.description ? session.description : ''}</div>
             </div>
             <div class="session-actions">
-                <div class="session-duration">${duration}m</div>
+                <div class="session-duration">${formatMinutes(duration)}</div>
                 <div style="display: flex; gap: 5px; margin-top: 5px;">
                     <button class="btn-small btn-danger delete-session-btn" data-session-id="${session.id}">🗑️ Eliminar</button>
                     <button class="btn-small edit-session-btn" data-session-id="${session.id}">✏️ Editar</button>
@@ -280,10 +288,10 @@ function exportToCSV() {
             const startDate = new Date(s.startTime);
             const endDate = new Date(s.endTime);
             return [s.id, startDate.toLocaleDateString('es-ES'), startDate.toLocaleTimeString('es-ES'),
-                    endDate.toLocaleTimeString('es-ES'), getTypeLabel(s.type), s.description || '', s.client || '', duration];
+            endDate.toLocaleTimeString('es-ES'), getTypeLabel(s.type), s.description || '', s.client || '', duration];
         });
 
-        const csvContent = [headers, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+        const csvContent = [headers, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
@@ -298,12 +306,11 @@ function exportToCSV() {
 /* TODO: Elimina una sesión del historial por su ID */
 function deleteSession(sessionId) {
     if (!confirm('¿Estás seguro de que quieres eliminar esta sesión?')) return;
-    chrome.runtime.sendMessage({ action: 'deleteSession', sessionId }, response => {
-        if (response?.success) {
+    chrome.runtime.sendMessage({ action: 'deleteSession', sessionId: String(sessionId) }, () => {
+        // Esperar un poco y recargar la lista, ignorar error de respuesta
+        setTimeout(() => {
             loadDashboardData();
-        } else {
-            alert('Error al eliminar la sesión');
-        }
+        }, 200);
     });
 }
 
@@ -382,7 +389,7 @@ function addClient() {
     const clientName = input.value.trim();
     if (!clientName) return alert('Por favor ingresa un nombre para el cliente');
 
-    const clientId = `client_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
+    const clientId = `client_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
     chrome.storage.local.get(['clients'], data => {
         const clients = data.clients || [];
@@ -441,112 +448,112 @@ let timeChart = null;
 
 /* TODO: Crea y renderiza el gráfico de barras de tiempo por tipo de sesión */
 function createTimeChart(sessions) {
-  if (typeof Chart === 'undefined') return console.error('Chart.js no está disponible');
+    if (typeof Chart === 'undefined') return console.error('Chart.js no está disponible');
 
-  const canvas = document.getElementById('timeChart');
-  if (!canvas) return console.error('Canvas para gráfico no encontrado');
-  const ctx = canvas.getContext('2d');
+    const canvas = document.getElementById('timeChart');
+    if (!canvas) return console.error('Canvas para gráfico no encontrado');
+    const ctx = canvas.getContext('2d');
 
-  if (timeChart) timeChart.destroy();
+    if (timeChart) timeChart.destroy();
 
-  if (!sessions || sessions.length === 0) {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.font = '16px Arial';
-    ctx.fillStyle = '#666';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('No hay datos para mostrar', canvas.width / 2, canvas.height / 2);
-    return;
-  }
-
-  // Agrupar tiempos por tipo
-  const timeByType = {};
-  sessions.forEach(s => {
-    const type = s.type || 'Otros';
-    let duration = 0;
-    if (typeof s.duration === 'number') duration = s.duration / 60000; // minutos
-    else if (s.startTime && s.endTime) duration = (new Date(s.endTime) - new Date(s.startTime)) / 60000;
-    if (duration > 0) timeByType[type] = (timeByType[type] || 0) + duration;
-  });
-
-  const labels = Object.keys(timeByType).map(getTypeLabel);
-  const data = Object.values(timeByType);
-  const backgroundColor = generateColors(labels.length);
-
-  // Crear gráfico de barras
-  timeChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Tiempo total (minutos)',
-        data,
-        backgroundColor,
-        borderColor: '#333',
-        borderWidth: 1
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: ctx => {
-              const minutes = ctx.parsed.y;
-              return `${ctx.label}: ${formatMinutes(minutes)} (${Math.round(minutes)} min)`;
-            }
-          }
-        }
-      },
-      scales: {
-        y: {
-          beginAtZero: true,
-          title: { display: true, text: 'Minutos' }
-        },
-        x: {
-          title: { display: true, text: 'Tipo de sesión' }
-        }
-      }
+    if (!sessions || sessions.length === 0) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.font = '16px Arial';
+        ctx.fillStyle = '#666';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('No hay datos para mostrar', canvas.width / 2, canvas.height / 2);
+        return;
     }
-  });
+
+    // Agrupar tiempos por tipo
+    const timeByType = {};
+    sessions.forEach(s => {
+        const type = s.type || 'Otros';
+        let duration = 0;
+        if (typeof s.duration === 'number') duration = s.duration / 60000; // minutos
+        else if (s.startTime && s.endTime) duration = (new Date(s.endTime) - new Date(s.startTime)) / 60000;
+        if (duration > 0) timeByType[type] = (timeByType[type] || 0) + duration;
+    });
+
+    const labels = Object.keys(timeByType).map(getTypeLabel);
+    const data = Object.values(timeByType);
+    const backgroundColor = generateColors(labels.length);
+
+    // Crear gráfico de barras
+    timeChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [{
+                label: 'Tiempo total (minutos)',
+                data,
+                backgroundColor,
+                borderColor: '#333',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => {
+                            const minutes = ctx.parsed.y;
+                            return `${ctx.label}: ${formatMinutes(minutes)} (${Math.round(minutes)} min)`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: 'Minutos' }
+                },
+                x: {
+                    title: { display: true, text: 'Tipo de sesión' }
+                }
+            }
+        }
+    });
 }
 
 
 /* TODO: Filtra las sesiones según el rango de fechas seleccionado */
 function filterSessionsByRange(sessions, range) {
-  const now = new Date();
-  return sessions.filter(s => {
-    const start = new Date(s.startTime);
-    if (range === 'day') return start.toDateString() === now.toDateString();
-    if (range === 'week') {
-      const weekStart = new Date(now);
-      weekStart.setDate(now.getDate() - now.getDay());
-      const weekEnd = new Date(weekStart);
-      weekEnd.setDate(weekStart.getDate() + 6);
-      return start >= weekStart && start <= weekEnd;
-    }
-    if (range === 'month') return start.getMonth() === now.getMonth() && start.getFullYear() === now.getFullYear();
-    return true;
-  });
+    const now = new Date();
+    return sessions.filter(s => {
+        const start = new Date(s.startTime);
+        if (range === 'day') return start.toDateString() === now.toDateString();
+        if (range === 'week') {
+            const weekStart = new Date(now);
+            weekStart.setDate(now.getDate() - now.getDay());
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekStart.getDate() + 6);
+            return start >= weekStart && start <= weekEnd;
+        }
+        if (range === 'month') return start.getMonth() === now.getMonth() && start.getFullYear() === now.getFullYear();
+        return true;
+    });
 }
 
 /* TODO: Formatea minutos en formato Xh Ym */
 function formatMinutes(minutes) {
-  const h = Math.floor(minutes / 60);
-  const m = Math.round(minutes % 60);
-  return `${h}h ${m}m`;
+    const h = Math.floor(minutes / 60);
+    const m = Math.round(minutes % 60);
+    return `${h}h ${m}m`;
 }
 
 /* TODO: Genera una paleta de colores HSL para el gráfico */
 function generateColors(n) {
-  const colors = [];
-  for(let i=0;i<n;i++){
-    const hue = i * (360 / n);
-    colors.push(`hsl(${hue}, 70%, 60%)`);
-  }
-  return colors;
+    const colors = [];
+    for (let i = 0; i < n; i++) {
+        const hue = i * (360 / n);
+        colors.push(`hsl(${hue}, 70%, 60%)`);
+    }
+    return colors;
 }
 
 
@@ -568,12 +575,12 @@ document.addEventListener('DOMContentLoaded', () => {
 /* TODO: Limpia datos corruptos de clientes y sesiones en storage */
 function cleanCorruptedData() {
     if (!confirm('¿Estás seguro de limpiar datos corruptos? Esta acción no se puede deshacer.')) return;
-    chrome.storage.local.get(['clients','sessions'], data => {
-        const cleanClients = (data.clients||[]).filter(c => c?.id && c?.name);
-        const cleanSessions = (data.sessions||[]).filter(s => s?.id && s?.startTime);
+    chrome.storage.local.get(['clients', 'sessions'], data => {
+        const cleanClients = (data.clients || []).filter(c => c?.id && c?.name);
+        const cleanSessions = (data.sessions || []).filter(s => s?.id && s?.startTime);
 
         chrome.storage.local.set({ clients: cleanClients, sessions: cleanSessions }, () => {
-            alert(`Limpieza completada:\n- ${data.clients.length-cleanClients.length} clientes corruptos eliminados\n- ${data.sessions.length-cleanSessions.length} sesiones corruptas eliminadas`);
+            alert(`Limpieza completada:\n- ${data.clients.length - cleanClients.length} clientes corruptos eliminados\n- ${data.sessions.length - cleanSessions.length} sesiones corruptas eliminadas`);
             loadDashboardData();
         });
     });

@@ -335,11 +335,12 @@ function endBreak() {
 /* TODO: Elimina una sesión del historial por su ID */
 function deleteSession({ sessionId }, sendResponse) {
     chrome.storage.local.get('sessions', ({ sessions = [] }) => {
-        const filtered = (sessions || []).filter(s => s.id !== sessionId);
+        const filtered = (sessions || []).filter(s => String(s.id) !== String(sessionId));
         chrome.storage.local.set({ sessions: filtered }, () => {
             if (sendResponse) sendResponse({ success: true });
         });
     });
+    return true; // 👈 importante para canal asíncrono
 }
 
 /* TODO: Obtiene datos de storage por clave */

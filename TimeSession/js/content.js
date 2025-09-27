@@ -179,6 +179,7 @@
             break: 'Descanso'
         };
 
+
         if (selectedType === 'client') {
             const select = modal.querySelector('#clientSelect');
             client = select ? select.value : null;

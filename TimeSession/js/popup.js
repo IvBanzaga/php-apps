@@ -18,6 +18,15 @@ document.addEventListener('DOMContentLoaded', () => {
     /* TODO: Actualiza la vista del popup según el estado actual (sesión, descanso, inactivo) */
     function updateView() {
         const breakControls = document.getElementById('breakControls');
+
+        const typeLabels = {
+            personal: 'Personal',
+            client: 'Cliente',
+            learning: 'Aprendizaje',
+            programming: 'Programando',
+            break: 'Descanso'
+        };
+
         if (breakInfo) {
             noActivityEl.style.display = 'none';
             typeEl.textContent = '☕ Descanso';
@@ -27,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
             breakControls.style.display = 'flex';
         } else if (currentSession) {
             noActivityEl.style.display = 'none';
-            typeEl.textContent = currentSession.type || '';
+            typeEl.textContent = typeLabels[currentSession.type] || currentSession.type || '';
             descEl.textContent = currentSession.description || '';
             startSessionTimer();
             sessionControls.style.display = 'flex';
@@ -45,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
             noActivityEl.style.display = 'block';
             typeEl.textContent = '';
             descEl.textContent = '';
-            timerEl.textContent = '0m 00s';
+            timerEl.textContent = '0h 0m 00s';
             if (timerInterval) clearInterval(timerInterval);
             sessionControls.style.display = 'none';
             breakControls.style.display = 'none';
@@ -83,10 +92,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /* TODO: Formatea la duración en formato mm:ss */
     function formatDuration(totalSeconds) {
-        const minutes = Math.floor(totalSeconds / 60);
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
         const seconds = totalSeconds % 60;
-        return `${minutes}m ${seconds.toString().padStart(2,'0')}s`;
+
+        // Formatear para que siempre tenga 2 dígitos
+        const hStr = hours.toString().padStart(2, '0');
+        const mStr = minutes.toString().padStart(2, '0');
+        const sStr = seconds.toString().padStart(2, '0');
+
+        return `${hStr}:${mStr}:${sStr}`;
     }
+
 
     /* TODO: Al cargar el popup, solicita el estado actual al background */
     chrome.runtime.sendMessage({ action: 'checkState' }, (response) => {
@@ -102,8 +119,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     dashboardBtn.addEventListener('click', () => {
-    window.open(chrome.runtime.getURL('html/dashboard.html'), '_blank');
-    window.close();
+        window.open(chrome.runtime.getURL('html/dashboard.html'), '_blank');
+        window.close();
     });
 
     /* TODO: Evento para pausar la sesión activa */

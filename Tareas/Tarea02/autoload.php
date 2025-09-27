@@ -16,7 +16,7 @@ function autoload($clase)
         __DIR__ . "/app/Controllers/",
         __DIR__ . "/app/Models/",
         __DIR__ . "/app/Views/",
-        __DIR__ . "/data"
+        __DIR__ . "/data/vecinos.dat"
     ];
 
     foreach ($folders as $folder) {

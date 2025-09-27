@@ -6,7 +6,7 @@
 </head>
 
 <body>
-  <h1>Acceso a la comunidad</h1>
+  <!-- TODO: Formulario login -->
   <form method="POST" action="index.php?action=doLogin">
     Usuario: <input type="text" name="username"><br>
     Contraseña: <input type="password" name="password"><br>

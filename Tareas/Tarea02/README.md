@@ -1,9 +1,13 @@
-
 # Tarea02 - Sistema de Autenticación y Gestión de Comunidad
 
 Proyecto PHP con arquitectura MVC para gestionar usuarios, roles y sesiones en una comunidad.
 
-## Estructura del proyecto
+## 🚀 Recomendación para desarrollo en VSCode
+
+💡 Este proyecto incluye comentarios `TODO:` en el código fuente, que pueden servir como índice y guía de tareas pendientes o puntos clave.  
+🔎 Se recomienda instalar la extensión [Todo Tree](https://marketplace.visualstudio.com/items?itemName=Gruntfuggly.todo-tree) en VSCode para visualizar y navegar fácilmente estos comentarios.
+
+## 📁 Estructura del proyecto
 
 ```
 Tarea02/
@@ -47,7 +51,7 @@ Tarea02/
 ```
 
 
-# Diagrama de Roles y Permisos
+# 🛡️ Diagrama de Roles y Permisos
 ```
 VecinosApp
 ├─ 🏠 Vecino
@@ -88,7 +92,7 @@ VecinosApp
 
 
 
-# Dashboards según Rol
+# 📊 Dashboards según Rol
 
 ## 1️⃣ Dashboard del Vecino
 ```
@@ -167,7 +171,7 @@ VecinosApp
 
 ```
 
-## Convenciones y patrones
+## 📝 Convenciones y patrones
 - Autoloading propio en `autoload.php` (no composer).
 - Controladores con sufijo `Controller`.
 - Modelos en singular.
@@ -176,7 +180,7 @@ VecinosApp
 - Datos persistentes en archivos `.dat`.
 - Punto de entrada único en `public/index.php`.
 
-## Superglobales PHP utilizadas
+## 🧰 Superglobales PHP utilizadas
 Estas variables están disponibles en cualquier parte del código y son clave para el funcionamiento del sistema:
 
 - `$_SERVER`: Información del servidor y entorno de ejecución.
@@ -189,13 +193,13 @@ Estas variables están disponibles en cualquier parte del código y son clave pa
 - `$_ENV`: Variables de entorno.
 - `$_GLOBALS`: Todas las variables globales del script.
 
-## Flujo principal
+## 🔄 Flujo principal
 1. El usuario accede a `public/index.php`.
 2. Se inicia la sesión y se cargan las dependencias.
 3. Según el método y parámetros, se gestiona login, logout o dashboard según rol.
 4. Los datos de usuarios y vecinos se leen desde archivos en `data/`.
 
-## Permisos por rol
+## 🔐 Permisos por rol
 
 | Rol          | Ver                        | Modificar                                 | Acciones adicionales                  |
 |--------------|----------------------------|-------------------------------------------|---------------------------------------|
@@ -203,12 +207,14 @@ Estas variables están disponibles en cualquier parte del código y son clave pa
 | Presidente   | Todos los vecinos          | Cuotas pagadas y fecha última cuota        | Ninguna                               |
 | Administrador| Todos los vecinos          | Todos los datos (teléfono, email, viviendas, cuotas) | Alta/baja de vecinos                 |
 
-## Scaffolding rápido
+## ⚡ Scaffolding rápido
 Para crear un nuevo recurso:
 - Modelo: `app/Models/Recurso.php`
 - Controlador: `app/Controllers/RecursoController.php`
 - Vista: `app/Views/recurso/index.php`
 - Añadir ruta en `config/routes.php` si es necesario.
 
+
+
 ---
-Para dudas sobre superglobales, consulta la documentación oficial de PHP: https://www.php.net/manual/es/language.variables.superglobals.php
+❓ Para dudas sobre superglobales, consulta la documentación oficial de PHP: https://www.php.net/manual/es/language.variables.superglobals.php
